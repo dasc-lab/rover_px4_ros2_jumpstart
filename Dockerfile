@@ -46,6 +46,7 @@ RUN apt install -y ros-humble-ros-base ros-dev-tools
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 
 RUN apt-get install -y libboost-all-dev ros-humble-diagnostic-updater
-
+RUN apt install -y tmux iputils-ping
 
 WORKDIR /home/colcon_ws
+RUN echo "source /home/colcon_ws/install/setup.bash" >> ~/.bashrc
