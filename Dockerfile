@@ -23,6 +23,9 @@ RUN meson setup build . --buildtype=release
 RUN ninja -C build
 RUN ninja -C build install
 
+## install python empy 
+RUN pip3 install empy==3.3.4
+
 ## install microXRCE agent
 WORKDIR /root
 RUN git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git
