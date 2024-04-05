@@ -12,4 +12,4 @@
 	url = git@github.com:dasc-lab/ros2-ping.git
 [submodule "colcon_ws/src/dasc_ros"]
 	path = colcon_ws/src/dasc_ros
-	url = git@github.com:dev10110/dasc_ros.git
+	url = git@github.com:dasc-lab/dasc_ros.git
