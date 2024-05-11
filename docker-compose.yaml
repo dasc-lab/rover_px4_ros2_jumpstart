@@ -8,6 +8,7 @@ services:
     network_mode: "host"
     volumes:
        - ./colcon_ws:/home/colcon_ws
+       - ../wind_disturbance:/home/wind_disturbance
        - /tmp/.X11-unix:/tmp/.X11-unix
        - $HOME/.Xauthority:/home/admin/.Xauthority:rw 
     environment:
@@ -16,7 +17,7 @@ services:
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
       - FASTRTPS_DEFAULT_PROFILES_FILE=/home/colcon_ws/rtps_udp_profile.xml
-      - ROS_DOMAIN_ID=4
+      - ROS_DOMAIN_ID=0
     runtime: nvidia
     deploy:
       resources:

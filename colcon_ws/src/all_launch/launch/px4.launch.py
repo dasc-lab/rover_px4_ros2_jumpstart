@@ -12,7 +12,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 def generate_launch_description():
 
     microXRCE_bridge = ExecuteProcess(
-            cmd=['MicroXRCEAgent', 'serial', '--dev', '/dev/ttyUSB0', '-b', '921600'], 
+            cmd=['MicroXRCEAgent', 'serial', '--dev', '/dev/ttyUSB1', '-b', '921600'], 
             name='microXRCEAgent', 
             output='both')
 
@@ -24,7 +24,7 @@ def generate_launch_description():
             name="mavlink-routerd",
             output='log')
     
-    robot_name = "px4_10"
+    robot_name = "px4_1"
     vicon_px4_bridge_node = Node(
         package='vicon_px4_bridge', executable='bridge', output='screen',
         parameters=[{'px4_name': robot_name, 'vicon_name': robot_name}]
