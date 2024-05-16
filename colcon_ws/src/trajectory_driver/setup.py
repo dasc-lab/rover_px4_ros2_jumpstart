@@ -25,6 +25,7 @@ setup(
             'circle_simple=trajectory_driver.circle_simple:main',
             'data_node=trajectory_driver.data_node:main',
             'message_node=trajectory_driver.message_node:main'
+            #'circle_smooth=trajectory_driver.circle_smooth:main'
         ],
     },
 )

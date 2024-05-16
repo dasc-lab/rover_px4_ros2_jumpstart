@@ -53,15 +53,15 @@ class data(Node):
         self.acc_ned_arr.append(self.ned_acc)
         acc_diff = self.ned_acc - self.acc_com
         self.acc_diffs.append(acc_diff)
-        print(f"data callback")
-        if(time.time() - self.start) > 25:
-            print(f"save and break")
-            np.save("acc_cmd", self.acc_cmd_arr)
-            np.save("acc_ned", self.acc_ned_arr)
-            np.save('disturbance',self.acc_diffs)
-            print("length:", len(self.acc_diffs))
-            rclpy.shutdown()
-            node.destroy_node()
+        
+        #if(time.time() - self.start) > 25:
+        #    print(f"save and break")
+        #    np.save("acc_cmd", self.acc_cmd_arr)
+        #    np.save("acc_ned", self.acc_ned_arr)
+        #    np.save('disturbance',self.acc_diffs)
+        #    print("length:", len(self.acc_diffs))
+        #    rclpy.shutdown()
+        #    node.destroy_node()
     def calculate_thrust(self):
         diff_pos = np.array(self.ned_pos - self.pos_ref)
         diff_vel = np.array(self.ned_vel - self.vel_ref)
