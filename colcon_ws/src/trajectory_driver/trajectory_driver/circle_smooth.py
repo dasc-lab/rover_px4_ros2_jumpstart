@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import *
@@ -29,7 +30,7 @@ class driveCircle(Node):
 
         ################## set up Subscription ##################
         self.timer = self.create_timer(1./80., self.timer_callback)
-        self.coord = self.create_subscription(
+        self.coord_sub = self.create_subscription(
 		    VehicleLocalPosition,
 		    '/px4_1/fmu/out/vehicle_local_position',
 		    self.coordinate_callback,
@@ -69,7 +70,7 @@ class driveCircle(Node):
         acc_ref = self.calculate_acc_ref()
 
         msg.position[0] = waypoint[0] #world_coordinates[0]
-        msg.position[1] = waypoint[1]#world_coordinates[1]
+        msg.position[1] = waypoint[1] #world_coordinates[1]
         msg.position[2] = self.height #world_coordinates[2]
         msg.yaw = 290 * 3.14/180.0 #0.0
         for i in range(3):
@@ -79,14 +80,47 @@ class driveCircle(Node):
         msg.jerk[0] = msg.jerk[1] = msg.jerk[2] = 0 
         msg.yawspeed = 0.0
         return msg
+    def calculate_intermediate_waypoint(self, waypoint):
+        '''
+        calculate intermediate waypoint in case drone is too far away
+        '''
+        def calculate_unit_vector(point1, point2):
+            """
+            Calculate the unit vector from point1 to point2.
 
-    def create_TrajectorySetpoint_msg_default(self,waypoint):
+            Parameters:
+            point1 (list or tuple): Coordinates of the first point (x1, y1, z1).
+            point2 (list or tuple): Coordinates of the second point (x2, y2, z2).
+
+            Returns:
+            numpy.ndarray: The unit vector from point1 to point2.
+            """
+            
+            point1 = np.array(point1)
+            point2 = np.array(point2)
+
+            
+            vector = point2 - point1
+
+            # Calculate the magnitude of the vector
+            magnitude = np.linalg.norm(vector)
+
+            # Calculate the unit vector
+            unit_vector = vector / magnitude
+
+            return unit_vector
+        unit_vector = calculate_unit_vector(self.coordinate, waypoint)
+        intermediate = 0.2 * unit_vector
+        return intermediate
+    def create_TrajectorySetpoint_msg_intermediate(self,waypoint):
         msg = TrajectorySetpoint()
-        #waypoint = self.calculate_waypoint()
-        msg.position[0] = waypoint[0] #world_coordinates[0]
-        msg.position[1] = waypoint[1]#world_coordinates[1]
-        msg.position[2] = self.height #world_coordinates[2]
-        #msg.yaw = (3.1415926 / 180.) * (float)(setpoint_yaw->value())
+        intermediate = self.calculate_intermediate_waypoint(waypoint)
+        assert intermediate[2] < 0
+        
+        msg.position[0] = intermediate[0] # world_coordinates[0]
+        msg.position[1] = intermediate[1] # world_coordinates[1]
+        msg.position[2] = self.height # world_coordinates[2]
+        # msg.yaw = (3.1415926 / 180.) * (float)(setpoint_yaw->value())
         msg.yaw = 290 * 3.14/180.0 #0.0
         for i in range(3):
             msg.velocity[i] = 0.0
@@ -103,7 +137,7 @@ class driveCircle(Node):
         waypoint = self.calculate_waypoint()
         msg = self.create_TrajectorySetpoint_msg()
         if euclidean_distance(self.coordinate, waypoint)>0.02 and self.coordinate is not None:
-            msg = self.create_TrajectorySetpoint_msg_default(waypoint)
+            msg = self.create_TrajectorySetpoint_msg_intermediate(waypoint)
 
 
         self.publisher_.publish(msg)
