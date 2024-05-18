@@ -5,6 +5,7 @@ from std_msgs.msg import *
 import numpy as np
 from px4_msgs.msg import TrajectorySetpoint, VehicleLocalPosition
 from rclpy.clock import Clock
+import time
 
 
 class driveCircle(Node):
@@ -16,9 +17,11 @@ class driveCircle(Node):
         self.height = -0.4
         self.center_x = 0.0
         self.center_y = 0.0
+        self.home_x = None
+        self.home_y = None
         self.angular_vel = 1.0
-
-
+        #self.initialized = False
+        self.program_start = time.time()
         ###### set up node parameters ######
         self.publisher_ = self.create_publisher(TrajectorySetpoint, '/px4_1/fmu/in/trajectory_setpoint', 10)
         self.coordinate = None
@@ -39,6 +42,9 @@ class driveCircle(Node):
     
     #def get_ground_truth_coord(self):
     def coordinate_callback(self,msg):
+        if self.home_x is None and self.home_y is None:
+            self.home_x = msg.x
+            self.home_y = msg.y
         self.coordinate = [msg.x,msg.y,msg.z]
     def calculate_waypoint(self):
         deltaT = (self.get_clock().now().nanoseconds-self.start_time)/10**9
@@ -112,6 +118,19 @@ class driveCircle(Node):
         unit_vector = calculate_unit_vector(self.coordinate, waypoint)
         intermediate = 0.2 * unit_vector
         return intermediate
+    def create_hover_TrajectorySetpoint_msg(self, waypoint):
+        msg = TrajectorySetpoint()
+        msg.position[0] = waypoint[0] #world_coordinates[0]
+        msg.position[1] = waypoint[1] #world_coordinates[1]
+        msg.position[2] = self.height #world_coordinates[2]
+        msg.yaw = 290 * 3.14/180.0 #0.0
+        for i in range(3):
+            msg.velocity[i] = 0
+            msg.acceleration[i] = 0
+         
+        msg.jerk[0] = msg.jerk[1] = msg.jerk[2] = 0 
+        msg.yawspeed = 0.0
+        return msg
     def create_TrajectorySetpoint_msg_intermediate(self,waypoint):
         msg = TrajectorySetpoint()
         intermediate = self.calculate_intermediate_waypoint(waypoint)
@@ -131,11 +150,18 @@ class driveCircle(Node):
         return msg
     
     def timer_callback(self):
+        
         def euclidean_distance(point1, waypoint):
             distance = np.sqrt((waypoint[0] - point1[0])**2 + (waypoint[1] - point1[1])**2 + (waypoint[2] - point1[2])**2)
             return distance
+        
+        if time.time() - self.program_start < 5: 
+            msg = self.create_hover_TrajectorySetpoint_msg([self.home_x, self.home_y, self.height])
+            self.publisher_.publish(msg)
+            return
         waypoint = self.calculate_waypoint()
         msg = self.create_TrajectorySetpoint_msg()
+
         if euclidean_distance(self.coordinate, waypoint)>0.02 and self.coordinate is not None:
             msg = self.create_TrajectorySetpoint_msg_intermediate(waypoint)
 
