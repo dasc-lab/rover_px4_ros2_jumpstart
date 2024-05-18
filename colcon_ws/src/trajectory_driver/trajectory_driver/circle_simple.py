@@ -12,11 +12,11 @@ class driveCircle(Node):
         super().__init__('driveCircle')
 
         ###### set up circle parameters ######
-        self.radius = 0.4
+        self.radius = 0.3
         self.height = -0.4
         self.center_x = 0.0
         self.center_y = 0.0
-        self.angular_vel = 2.0
+        self.angular_vel = 1.5
 
 
         ###### set up node parameters ######
@@ -65,7 +65,7 @@ class driveCircle(Node):
         msg.position[0] = waypoint[0] #world_coordinates[0]
         msg.position[1] = waypoint[1]#world_coordinates[1]
         msg.position[2] = self.height #world_coordinates[2]
-        msg.yaw = 290 * 3.14/180.0 #0.0
+        msg.yaw = 0 * 3.14/180.0 #0.0
         for i in range(3):
             msg.velocity[i] = vel_ref[i]
             msg.acceleration[i] = acc_ref[i]
@@ -81,7 +81,7 @@ class driveCircle(Node):
         msg.position[1] = waypoint[1]#world_coordinates[1]
         msg.position[2] = self.height #world_coordinates[2]
         #msg.yaw = (3.1415926 / 180.) * (float)(setpoint_yaw->value())
-        msg.yaw = 290 * 3.14/180.0 #0.0
+        msg.yaw = 0 * 3.14/180.0 #0.0
         for i in range(3):
             msg.velocity[i] = 0.0
             msg.acceleration[i] = 0.0
