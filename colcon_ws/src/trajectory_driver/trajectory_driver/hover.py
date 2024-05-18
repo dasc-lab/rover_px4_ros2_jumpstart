@@ -1,7 +1,9 @@
+#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import *
 import numpy as np
+import time
 from px4_msgs.msg import TrajectorySetpoint, VehicleLocalPosition
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 class hover(Node):
@@ -13,7 +15,7 @@ class hover(Node):
                             depth=1
         )
         ###### set up waypoint parameters ######
-        self.height = -0.5
+        self.height = -0.4
         self.center_x = 0.0
         self.center_y = 0.0
         self.initialized = False
@@ -24,6 +26,7 @@ class hover(Node):
         self.publisher_ = self.create_publisher(TrajectorySetpoint, '/px4_1/fmu/in/trajectory_setpoint', 10)
         self.coordinate = None
         self.heading = 0.0
+        self.start_time = time.time()
         ################## set up Timer ##################
         self.timer = self.create_timer(1./30., self.timer_callback)
         
@@ -56,6 +59,8 @@ class hover(Node):
         return msg
     
     def timer_callback(self):
+        if time.time() - self.start_time > 5:
+             rclpy.shutdown()
         if self.initialized : 
             msg = self.create_TrajectorySetpoint_msg()
             self.publisher_.publish(msg)
