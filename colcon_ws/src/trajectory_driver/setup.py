@@ -26,8 +26,8 @@ setup(
             'data_node=trajectory_driver.data_node:main',
             'message_node=trajectory_driver.message_node:main',
             'hover=trajectory_driver.hover:main',
-            'figureeight=trajectory_driver.figureeight:main'
-            #'circle_smooth=trajectory_driver.circle_smooth:main'
+            'figureeight=trajectory_driver.figureeight:main',
+            'circle_smooth=trajectory_driver.circle_smooth:main'
         ],
     },
 )
