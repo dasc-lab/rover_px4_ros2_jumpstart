@@ -6,12 +6,16 @@ import numpy as np
 from px4_msgs.msg import TrajectorySetpoint, VehicleLocalPosition
 from rclpy.clock import Clock
 import time
-
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 
 class driveCircle(Node):
     def __init__(self):
         super().__init__('driveCircle')
-
+        qos_profile = QoSProfile(
+                            reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
+                            history=QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+                            depth=1
+        )
         ###### set up circle parameters ######
         self.radius = 0.3
         self.height = -0.4
@@ -23,7 +27,9 @@ class driveCircle(Node):
         self.angular_vel = 1.0
         #self.initialized = False
         self.program_start = time.time()
+
         ###### set up node parameters ######
+
         self.publisher_ = self.create_publisher(TrajectorySetpoint, '/px4_1/fmu/in/trajectory_setpoint', 10)
         self.coordinate = None
         self.quat = None
@@ -33,13 +39,14 @@ class driveCircle(Node):
         #self.dt = 0.05
 
         ################## set up Subscription ##################
+        
         self.timer = self.create_timer(1./80., self.timer_callback)
         self.coord_sub = self.create_subscription(
 		    VehicleLocalPosition,
 		    '/px4_1/fmu/out/vehicle_local_position',
 		    self.coordinate_callback,
-		    10)
-            #qos_profile=qos_profile)
+		    
+            qos_profile=qos_profile)
     
     #def get_ground_truth_coord(self):
     def coordinate_callback(self,msg):
@@ -119,7 +126,7 @@ class driveCircle(Node):
                 unit_vector = vector    
             return unit_vector
         unit_vector = calculate_unit_vector(self.coordinate, waypoint)
-        intermediate = 0.2 * unit_vector
+        intermediate = 0.2 * unit_vector + self.coordinate
         return intermediate
     def create_hover_TrajectorySetpoint_msg(self, waypoint):
         msg = TrajectorySetpoint()
@@ -160,15 +167,15 @@ class driveCircle(Node):
         def euclidean_distance(point1, waypoint):
             distance = np.sqrt((waypoint[0] - point1[0])**2 + (waypoint[1] - point1[1])**2 + (waypoint[2] - point1[2])**2)
             return distance
-        
-        if time.time() - self.program_start < 5: 
+        deltaT = (self.get_clock().now().nanoseconds-self.start_time)/10**9
+        if deltaT < 5: 
             msg = self.create_hover_TrajectorySetpoint_msg([self.home_x, self.home_y, self.height])
             self.publisher_.publish(msg)
             return
         waypoint = self.calculate_waypoint()
         msg = self.create_TrajectorySetpoint_msg()
 
-        if euclidean_distance(self.coordinate, waypoint)>0.02 and self.coordinate is not None:
+        if euclidean_distance(self.coordinate, waypoint)>0.10 and self.coordinate is not None:
             msg = self.create_TrajectorySetpoint_msg_intermediate(waypoint)
 
 

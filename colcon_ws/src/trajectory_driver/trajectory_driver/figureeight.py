@@ -64,7 +64,7 @@ class figureeight(Node):
         # msg.position[0] = waypoint[0] #world_coordinates[0]
         # msg.position[1] = waypoint[1] #world_coordinates[1]
         # msg.position[2] = self.height #world_coordinates[2]
-        msg.yaw = 290 * 3.14/180.0 #0.0
+        msg.yaw = 0 * 3.14/180.0 #0.0
         for i in range(3):
             msg.position[i] = waypoint[i]
             msg.velocity[i] = vel_ref[i]
@@ -82,7 +82,7 @@ class figureeight(Node):
         msg.position[1] = waypoint[1]#world_coordinates[1]
         msg.position[2] = self.height #world_coordinates[2]
         #msg.yaw = (3.1415926 / 180.) * (float)(setpoint_yaw->value())
-        msg.yaw = 290 * 3.14/180.0 #0.0
+        msg.yaw = 0 * 3.14/180.0 #0.0
         for i in range(3):
             msg.velocity[i] = 0.0
             msg.acceleration[i] = 0.0
