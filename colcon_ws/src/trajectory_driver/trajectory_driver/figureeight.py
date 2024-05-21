@@ -11,7 +11,7 @@ class figureeight(Node):
         super().__init__('figureeight')
 
         ###### set up circle parameters ######
-        self.radius = 0.2
+        self.radius = 0.4
         self.height = -0.4
         self.center_x = 0.0
         self.center_y = 0.0

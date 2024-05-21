@@ -17,7 +17,7 @@ class driveCircle(Node):
                             depth=1
         )
         ###### set up circle parameters ######
-        self.radius = 0.3
+        self.radius = 0.2
         self.height = -0.4
         self.center_x = 0.0
         self.center_y = 0.0
@@ -168,7 +168,7 @@ class driveCircle(Node):
             distance = np.sqrt((waypoint[0] - point1[0])**2 + (waypoint[1] - point1[1])**2 + (waypoint[2] - point1[2])**2)
             return distance
         deltaT = (self.get_clock().now().nanoseconds-self.start_time)/10**9
-        if deltaT < 5: 
+        if deltaT < 8: 
             msg = self.create_hover_TrajectorySetpoint_msg()
             self.publisher_.publish(msg)
             return
