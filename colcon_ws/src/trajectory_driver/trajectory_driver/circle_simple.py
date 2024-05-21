@@ -12,11 +12,11 @@ class driveCircle(Node):
         super().__init__('driveCircle')
 
         ###### set up circle parameters ######
-        self.radius = 0.3
+        self.radius = 0.4
         self.height = -0.4
         self.center_x = 0.4
         self.center_y = 0.0
-        self.angular_vel = 1.5
+        self.angular_vel = 2
 
 
         ###### set up node parameters ######

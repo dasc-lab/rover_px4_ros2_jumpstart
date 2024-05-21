@@ -133,7 +133,7 @@ class driveCircle(Node):
         msg.position[0] = self.home_x #world_coordinates[0]
         msg.position[1] = self.home_y #world_coordinates[1]
         msg.position[2] = self.height #world_coordinates[2]
-        msg.yaw = self.heading * 3.14/180.0 #0.0
+        msg.yaw = self.heading  #0.0
         for i in range(3):
             msg.velocity[i] = 0
             msg.acceleration[i] = 0
@@ -170,6 +170,7 @@ class driveCircle(Node):
         deltaT = (self.get_clock().now().nanoseconds-self.start_time)/10**9
         if deltaT < 8: 
             msg = self.create_hover_TrajectorySetpoint_msg()
+            #print("heading is: ", self.heading)
             self.publisher_.publish(msg)
             return
         waypoint = self.calculate_waypoint()
