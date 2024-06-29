@@ -1,0 +1,29 @@
+version: "3"
+
+services:
+  rover_px4_ros2_jumpstart-ros-1:
+    build: .
+    privileged: true
+    tty: true
+    network_mode: "host"
+    volumes:
+      - ./colcon_ws:/home/colcon_ws
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - $HOME/.Xauthority:/home/admin/.Xauthority:rw
+    environment:
+      - DISPLAY=$DISPLAY
+      - ROS_DOMAIN_ID=4
+
+  rover_px4_ros2_jumpstart-ros-2:
+    build: .
+    privileged: true
+    tty: true
+    network_mode: "host"
+    volumes:
+      - ./colcon_ws:/home/colcon_ws
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - $HOME/.Xauthority:/home/admin/.Xauthority:rw
+    environment:
+      - DISPLAY=$DISPLAY
+      - ROS_DOMAIN_ID=4
+

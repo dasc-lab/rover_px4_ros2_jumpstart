@@ -4,7 +4,6 @@ sudo chmod -R o+r /var/lib/command-not-found/
 
 # install net-tools
 sudo apt-get update 
-sudo apt-get upgrade
 sudo apt-get install -y net-tools vim
 
 # Add Docker's official GPG key:
@@ -34,10 +33,10 @@ docker run hello-world
 
 
 ## setup github account
-git config --global user.email "devansh@umich.edu"
-git config --global user.name "devansh"
+git config --global user.email "rahulhkumar9@gmail.com"
+git config --global user.name "RahulHKumar"
 
-ssh-keygen -t ed25519 -C "devansh@umich.edu"
+ssh-keygen -t ed25519 -C "rahulhkumar9@gmail.com"
 eval "$(ssh-agent -s)"
 
 
