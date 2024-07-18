@@ -2,25 +2,25 @@ rosbag2_bagfile_information:
   version: 5
   storage_identifier: sqlite3
   duration:
-    nanoseconds: 26879282339
+    nanoseconds: 28545623350
   starting_time:
-    nanoseconds_since_epoch: 1720906564455271657
-  message_count: 2003
+    nanoseconds_since_epoch: 1721326345216237937
+  message_count: 2244
   topics_with_message_count:
     - topic_metadata:
         name: /drone/combined_data
         type: foresee_msgs/msg/DynamicsData
         serialization_format: cdr
         offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 2\n  deadline:\n    sec: 9223372036\n    nsec: 854775807\n  lifespan:\n    sec: 9223372036\n    nsec: 854775807\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 9223372036\n    nsec: 854775807\n  avoid_ros_namespace_conventions: false"
-      message_count: 2003
+      message_count: 2244
   compression_format: ""
   compression_mode: ""
   relative_file_paths:
-    - cir_traj_r0.2_w1.5_c0.50_h0.4_kxv74_unclipped_0.db3
+    - cir_traj_r0.2_w1.0_c00_h0.5_kxv74_clipped_new_0.db3
   files:
-    - path: cir_traj_r0.2_w1.5_c0.50_h0.4_kxv74_unclipped_0.db3
+    - path: cir_traj_r0.2_w1.0_c00_h0.5_kxv74_clipped_new_0.db3
       starting_time:
-        nanoseconds_since_epoch: 1720906564455271657
+        nanoseconds_since_epoch: 1721326345216237937
       duration:
-        nanoseconds: 26879282339
-      message_count: 2003
+        nanoseconds: 28545623350
+      message_count: 2244
