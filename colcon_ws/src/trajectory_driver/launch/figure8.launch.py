@@ -6,7 +6,7 @@ def generate_launch_description():
     rosbag = ExecuteProcess(
             cmd=[
                 'ros2', 'bag', 'record',
-                '-o', 'eight_traj_r0.4_w1_c0.80_h0.5_kxv74_unclipped_fanoff',
+                '-o', 'eight_traj_r0.4_w1_c00_h0.5_kxv74_fanoff_clipped_new',
                 '/drone/combined_data'
             ],
             output='screen'
