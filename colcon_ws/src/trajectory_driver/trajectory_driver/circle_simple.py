@@ -12,12 +12,11 @@ class driveCircle(Node):
         super().__init__('driveCircle')
 
         ###### set up circle parameters ######
-        self.radius = 0.2
+        self.radius = 0.4
         self.height = -0.5
-        self.center_x = 0.8
+        self.center_x = 0.6
         self.center_y = 0.0
-        self.angular_vel = 1.5
-
+        self.angular_vel = 1.0
 
         ###### set up node parameters ######
         self.publisher_ = self.create_publisher(TrajectorySetpoint, '/px4_1/fmu/in/trajectory_setpoint', 10)

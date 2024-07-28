@@ -6,9 +6,9 @@ def generate_launch_description():
     rosbag = ExecuteProcess(
             cmd=[
                 'ros2', 'bag', 'record',
-                '-o', 'cir_traj_r0.2_w1.5_c0.80_h0.5_kxv74_fanoff_clipped_new',
+                '-o', '27_07_2024_cir_traj_r0.4_w1.0_c0.60_h0.5_kxv14_7_4_fanon_clipped_new',
                 '/drone/combined_data'
-            ],
+            ], 
             output='screen'
         )
     delayed_recording = TimerAction(
