@@ -7,13 +7,25 @@
   <maintainer email="root@todo.todo">root</maintainer>
   <license>TODO: License declaration</license>
 
-  <depend>rclpy</depend>
+  <buildtool_depend>ament_python</buildtool_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
   <test_depend>python3-pytest</test_depend>
 
+  <build_depend>rclpy</build_depend>
+  <build_export_depend>rclpy</build_export_depend>
+  <exec_depend>rclpy</exec_depend>
+
+  <depend>std_msgs</depend>
+  <depend>px4_msgs</depend>
+  <depend>foresee_msgs</depend>
+  <depend>geometry_msgs</depend>
+  
+<exec_depend>ros2launch</exec_depend>
   <export>
     <build_type>ament_python</build_type>
   </export>
