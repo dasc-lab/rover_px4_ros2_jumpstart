@@ -20,7 +20,10 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'optimize_gains=online_op.optimize_gains:main'
+            'optimize_gains=online_op.optimize_gains:main',
+            'jax'
+            'optax',
+            'jaxopt'
         ],
     },
 )
