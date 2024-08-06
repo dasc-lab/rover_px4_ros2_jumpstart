@@ -13,3 +13,7 @@
 [submodule "colcon_ws/src/dasc_ros"]
 	path = colcon_ws/src/dasc_ros
 	url = git@github.com:dev10110/dasc_ros.git
+[submodule "colcon_ws/src/online_op/online_op/GPJax"]
+	path = colcon_ws/src/online_op/online_op/GPJax
+	url = git@github.com:hardikparwana/GPJax.git
+	branch = custom_sigma_inv
