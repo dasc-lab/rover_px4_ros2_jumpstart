@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import rclpy
-import sys
-sys.path.append('GPJax')
+import rclpy.node
+import sys, os
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append('./GPJax')
+import gpJax as gpx
 from rclpy.node import Node
 from std_msgs.msg import *
 import numpy as np
@@ -15,13 +18,19 @@ class optimize(Node):
     def __init__(self):
         super().__init__('optimize')
 
-        qos_profile = QoSProfile(
-                            reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
-                            history=QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_LAST,
-                            depth=1
-        )
+        # qos_profile = QoSProfile(
+        #                     reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
+        #                     history=QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+        #                     depth=1
+        # )
+
+        
         ###### set up trajectory parameters ######
-        self.trajectory_type = 'circle'
+        self.get_logger().info('Optimizer Node Starts')
+        
+        self.declare_parameter('trajectory_type', 'circle')
+        self.trajectory_type = self.get_parameter('trajectory_type').get_parameter_value().string_value
+        self.get_logger().info(f'Trajectory type: {self.trajectory_type}')
         self.radius = 0.4
         self.height = -0.5
         self.center_x = 0.6
@@ -46,6 +55,10 @@ class optimize(Node):
         self.gp0, self.gp1, self.gp2 = None
         self.clock  = self.get_clock()
         self.start_time = self.get_clock().now().nanoseconds
+
+
+        ###### set up optimizer parameters ######
+        self.op_horizon = 50
         self.op_dt = 0.05
         
         ################## set up Subscription ##################
@@ -53,29 +66,34 @@ class optimize(Node):
 		    VehicleLocalPosition,
 		    '/px4_1/fmu/out/vehicle_local_position',
 		    self.coordinate_callback,
-		    #10,
-            qos_profile=qos_profile)
+		    10)
+            #qos_profile=qos_profile)
 
     def initialize_gp(self):
         ###### load gaussian process models ######
-        file_path = 'gp_models'
-        gp_file_x = file_path + 'gp_model_x_norm5_clipped.pkl'
-        gp_file_y = file_path + 'gp_model_y_norm5_clipped.pkl'
-        gp_file_z = file_path + 'gp_model_z_norm5_clipped.pkl'
+        gp_file_path = current_dir+'gp_models/'
+        gp_file_x = gp_file_path + 'gp_model_x_norm5_clipped.pkl'
+        gp_file_y = gp_file_path + 'gp_model_y_norm5_clipped.pkl'
+        gp_file_z = gp_file_path + 'gp_model_z_norm5_clipped.pkl'
         self.gp0 = initialize_gp_prediction(gp_file_x)
         self.gp1 = initialize_gp_prediction(gp_file_y)
         self.gp2 = initialize_gp_prediction(gp_file_z)
+        
+        ###### load Datasets ######
+        trainset_file_path = 'dataset/'
+        train_x = np.load(trainset_file_path + 'training_disturbance_x.npy')
+        train_y = np.load(trainset_file_path + 'training_disturbance_y.npy')
+        train_z = np.load(trainset_file_path + 'training_disturbance_z.npy')
+        x = np.load(trainset_file_path+'training_input.npy')
+        y = np.column_stack((train_x, train_y, train_z))
 
-        ###### load Datasets ######       
-        x = np.load()
-        y = np.load()
         D0 = gpx.Dataset(X=x, y=y[0].reshape(-1,1))
         D1 = gpx.Dataset(X=x, y=y[1].reshape(-1,1))
         D2 = gpx.Dataset(X=x, y=y[2].reshape(-1,1))
         ###### compute the inverses ######
-        sigma0 = self.gp0.compute_sigma_inv(train_data=D0)
-        sigma1 = self.gp1.compute_sigma_inv(train_data=D1)
-        sigma2 = self.gp2.compute_sigma_inv(train_data=D2)
+        self.sigma0 = self.gp0.compute_sigma_inv(train_data=D0)
+        self.sigma1 = self.gp1.compute_sigma_inv(train_data=D1)
+        self.sigma2 = self.gp2.compute_sigma_inv(train_data=D2)
 
     def coordinate_callback(self):
         if self.ref_valid is False:
