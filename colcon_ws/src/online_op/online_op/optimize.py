@@ -14,6 +14,7 @@ from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from test_jax_utils import *
 from test_gp_utils import *
 from test_policy import *
+from foresee_msgs.msg import TrajectoryInfo
 class optimize(Node):
     def __init__(self):
         super().__init__('optimize')
@@ -27,7 +28,7 @@ class optimize(Node):
         
         ###### set up trajectory parameters ######
         self.get_logger().info('Optimizer Node Starts')
-        
+
         self.declare_parameter('trajectory_type', 'circle')
         self.trajectory_type = self.get_parameter('trajectory_type').get_parameter_value().string_value
         self.get_logger().info(f'Trajectory type: {self.trajectory_type}')
@@ -44,11 +45,10 @@ class optimize(Node):
 
         self.ned_pos = None
         self.ned_vel = None
-        self.ned_acc = None
+        
         self.pos_ref = None
         self.vel_ref = None
-        self.acc_ref = None
-        self.acc_com = None
+        
         self.ref_valid = False
         ###### set up node parameters ######
         
@@ -60,7 +60,8 @@ class optimize(Node):
         ###### set up optimizer parameters ######
         self.op_horizon = 50
         self.op_dt = 0.05
-        
+        self.custom_lr_rate = 0.1
+
         ################## set up Subscription ##################
         self.drone_coordinates = self.create_subscription(
 		    VehicleLocalPosition,
@@ -68,7 +69,32 @@ class optimize(Node):
 		    self.coordinate_callback,
 		    10)
             #qos_profile=qos_profile)
+        
+        self.trajectory_info = self.create_subscription(
+		    TrajectoryInfo,
+		    '/drone/TrajectoryInfo',
+		    self.trajectory_info_callback,
+		    10)
+        
+    def trajectory_info_callback(self,msg):
+        self.trajectory_type = msg.type
+        self.radius = msg.radius
+        self.angular_vel = msg.angular_vel
+        self.center_x = msg.center_x
+        self.center_y = msg.centery_y
 
+    def coordinate_callback(self, msg):
+            if self.ref_valid is False:
+                self.ref_valid = True
+                self.initialize_gp()
+                
+            deltaT = (self.get_clock().now().nanoseconds-self.start_time)/10**9
+            ref_coord = self.find_ref_coord(deltaT)
+            self.kx, self.kv = self.optimizer(ref_coord)
+            self.publish_optimal_gains()
+
+
+            
     def initialize_gp(self):
         ###### load gaussian process models ######
         gp_file_path = current_dir+'gp_models/'
@@ -95,15 +121,7 @@ class optimize(Node):
         self.sigma1 = self.gp1.compute_sigma_inv(train_data=D1)
         self.sigma2 = self.gp2.compute_sigma_inv(train_data=D2)
 
-    def coordinate_callback(self):
-        if self.ref_valid is False:
-            self.ref_valid = True
-            self.initialize_gp()
-            
-        deltaT = (self.get_clock().now().nanoseconds-self.start_time)/10**9
-        ref_coord = self.find_ref_coord(deltaT)
-        self.kx, self.kv = self.optimizer(ref_coord)
-        self.publish_optimal_gains()
+    
 
     def optimizer(self, ref_coord):
         
