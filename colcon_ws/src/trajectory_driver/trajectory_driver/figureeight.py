@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import *
 import numpy as np
 from px4_msgs.msg import TrajectorySetpoint
+from foresee_msgs.msg import TrajectoryInfo
 from rclpy.clock import Clock
 class figureeight(Node):
     def __init__(self):
@@ -20,6 +20,7 @@ class figureeight(Node):
 
         ###### set up node parameters ######
         self.publisher_ = self.create_publisher(TrajectorySetpoint, '/px4_1/fmu/in/trajectory_setpoint', 10)
+        self.trajectory_info_publisher_ = self.create_publisher(TrajectoryInfo,'/drone/TrajectoryInfo',10)
         self.coordinate = None
         self.quat = None
         self.world_coordinate = None
@@ -52,6 +53,16 @@ class figureeight(Node):
         ay = -self.radius * 4 * (self.angular_vel**2) * np.sin(self.angular_vel * deltaT) * np.cos(self.angular_vel * deltaT)
         acc_ref = [ay,ax,0]
         return acc_ref
+    
+    def create_trajectory_info_msg(self):
+        msg = TrajectoryInfo()
+        msg.type = 'figure8'
+        msg.radius = self.radius
+        msg.angular_vel = self.angular_vel
+        msg.center_x = self.center_x
+        msg.center_y = self.center_y
+        return msg
+
 
     def create_TrajectorySetpoint_msg(self):
         ''' Create message in NED frame '''
@@ -94,6 +105,9 @@ class figureeight(Node):
     def timer_callback(self):
         msg = self.create_TrajectorySetpoint_msg()
         self.publisher_.publish(msg)
+        
+        trajectory_info_msg = self.create_trajectory_info_msg()
+        self.trajectory_info_publisher_.publish(trajectory_info_msg)
         
 def main(args=None):
     rclpy.init(args=args)
