@@ -18,9 +18,9 @@ from test_policy import *
 from foresee_msgs.msg import TrajectoryInfo
 from pymavlink import mavutil
 # import pymavparam as pm
-class optimize(Node):
+class optimizer(Node):
     def __init__(self):
-        super().__init__('optimize')
+        super().__init__('optimizer')
 
         # qos_profile = QoSProfile(
         #                     reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
@@ -51,7 +51,8 @@ class optimize(Node):
         self.center_y = None
         self.angular_vel = None
         self.trajectory_type_valid = False
-        ###### set up initial parameters ######
+
+        ###### set up initial drone parameters ######
         self.kx = 7
         self.kv = 4
 
@@ -62,17 +63,26 @@ class optimize(Node):
         self.vel_ref = None
         
         self.ref_valid = False
+
+
         ###### set up node parameters ######
         
-        self.gp0, self.gp1, self.gp2 = None
+        
         self.clock  = self.get_clock()
         self.start_time = self.get_clock().now().nanoseconds
 
+
+        ###### set up Gaussian Process parameters ######
+        self.gp0, self.gp1, self.gp2 = None
+        self.training_state = None
+        self.training_disturbance = None
 
         ###### set up optimizer parameters ######
         self.op_horizon = 50
         self.op_dt = 0.05
         self.custom_lr_rate = 0.1
+        self.grad_clip = 1.0
+        self.iter_adam_custom = 300
 
         ################## set up Subscription ##################
         self.drone_coordinates = self.create_subscription(
@@ -102,6 +112,8 @@ class optimize(Node):
                 self.ref_valid = True
                 self.initialize_gp()
             self.current_pos = [msg.x, msg.y, msg.z]
+            self.current_vel = [msg.vx,msg.vy,msg.vz]
+
             if self.trajectory_type_valid is True:
                 deltaT = (self.get_clock().now().nanoseconds-self.start_time)/10**9
                 ref_coord = self.find_ref_coord(deltaT)
@@ -127,7 +139,8 @@ class optimize(Node):
         train_z = np.load(trainset_file_path + 'training_disturbance_z.npy')
         x = np.load(trainset_file_path+'training_input.npy')
         y = np.column_stack((train_x, train_y, train_z))
-
+        self.training_state = x
+        self.training_disturbance = y
         D0 = gpx.Dataset(X=x, y=y[0].reshape(-1,1))
         D1 = gpx.Dataset(X=x, y=y[1].reshape(-1,1))
         D2 = gpx.Dataset(X=x, y=y[2].reshape(-1,1))
@@ -139,8 +152,20 @@ class optimize(Node):
     
 
     def optimizer(self, ref_coord):
-        
+        gp_train_x = self.training_state
+        gp_train_y = self.training_disturbance
+        init_state = self.current_pos
+        def body(i, inputs):
+            params_policy = inputs
+            params_policy_grad = get_future_reward_grad( init_state, params_policy, gp_train_x, gp_train_y )
+            params_policy_grad = jnp.clip( params_policy_grad, -self.grad_clip, self.grad_clip )
+            params_policy = params_policy - self.custom_lr_rate * params_policy_grad
+        params_policy = [self.kx, self.kv]
+        params_policy = lax.fori_loop(0, self.iter_adam_custom, body, params_policy)
+        op_kx = params_policy[0]
+        op_kv = params_policy[1]
         return op_kx, op_kv
+    
     def find_ref_coord(self, deltaT):
         if self.trajectory_type == 'circle':
             pos_vel_acc = circle_pos_vel_acc
@@ -149,8 +174,10 @@ class optimize(Node):
         ref_coord,_,_ = pos_vel_acc(deltaT, self.radius, self. angular_vel, self.center_x, self.center_y)
         return ref_coord.reshape(-1,1)
 
+    def get_future_reward_grad(self):
 
     def publish_optimal_gains(self):
+        self.get_logger().info(f'Sending Gains: QUAD_KX = {self.kx}, QUAD_KV = {self.kv}')
         self.mavlink_.mav.param_set_send(
             self.mavlink_.target_system, self.mavlink_.target_component,
             b'QUAD_KX',
@@ -168,7 +195,7 @@ class optimize(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    node = optimize()
+    node = optimizer()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()

@@ -11,19 +11,22 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
-    install_requires=['setuptools'],
+    install_requires=[
+        'setuptools',
+        'jax'
+        'optax',
+        'jaxopt',
+        'pymavlink',
+    ],
     zip_safe=True,
     maintainer='root',
     maintainer_email='albfang@umich.edu',
-    description='TODO: Package description',
+    description='ROS Node to optimize gain parameters in real time',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'optimize_gains=online_op.optimize_gains:main',
-            'jax'
-            'optax',
-            'jaxopt'
+            'optimizer=online_op.optimize:main'
         ],
     },
 )
