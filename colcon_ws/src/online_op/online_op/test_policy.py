@@ -8,7 +8,7 @@ def state_ref(t):
 # policy_params = [14, 7.4]
 policy_params = [7, 4]
 @jit
-def policy( t, states, policy_params):
+def policy( t, states, policy_params,reference):
     '''
     Expect a multiple states as input. Each state is a column vector.
     Should then return multiple control inputs. Each input should be a column vector
@@ -21,8 +21,8 @@ def policy( t, states, policy_params):
     kx = policy_params[0]
     kv = policy_params[1]
 
-    pos_ref, vel_ref, acc_ref = state_ref(t)
-
+    # pos_ref, vel_ref, acc_ref = state_ref(t)
+    pos_ref, vel_ref, acc_ref = reference
     ex = states[0:3] - pos_ref
     # ex = lax.cond( jnp.linalg.norm(ex)>2, lambda z: 2.0 * z / jnp.linalg.norm(z), lambda z: z, ex )
     ev = states[3:6] - vel_ref

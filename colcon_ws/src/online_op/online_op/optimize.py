@@ -17,6 +17,7 @@ from test_gp_utils import *
 from test_policy import *
 from foresee_msgs.msg import TrajectoryInfo
 from pymavlink import mavutil
+from optimize_helper import *
 # import pymavparam as pm
 class optimizer(Node):
     def __init__(self):
@@ -58,7 +59,8 @@ class optimizer(Node):
 
         self.current_pos = None
         self.current_vel = None
-        
+        self.current_state = None
+
         self.pos_ref = None
         self.vel_ref = None
         
@@ -78,7 +80,9 @@ class optimizer(Node):
         self.training_disturbance = None
 
         ###### set up optimizer parameters ######
-        self.op_horizon = 50
+        self.w1 = 0.5
+        self.w2 = 0.1
+        self.horizon = 50
         self.op_dt = 0.05
         self.custom_lr_rate = 0.1
         self.grad_clip = 1.0
@@ -113,12 +117,14 @@ class optimizer(Node):
                 self.initialize_gp()
             self.current_pos = [msg.x, msg.y, msg.z]
             self.current_vel = [msg.vx,msg.vy,msg.vz]
+            self.current_state = np.array(self.current_pos + self.current_vel)
 
             if self.trajectory_type_valid is True:
                 deltaT = (self.get_clock().now().nanoseconds-self.start_time)/10**9
                 ref_coord = self.find_ref_coord(deltaT)
                 self.kx, self.kv = self.optimizer(ref_coord)
                 self.publish_optimal_gains()
+
 
 
 
@@ -157,7 +163,7 @@ class optimizer(Node):
         init_state = self.current_pos
         def body(i, inputs):
             params_policy = inputs
-            params_policy_grad = get_future_reward_grad( init_state, params_policy, gp_train_x, gp_train_y )
+            params_policy_grad = self.get_future_reward_grad( init_state, params_policy, gp_train_x, gp_train_y )
             params_policy_grad = jnp.clip( params_policy_grad, -self.grad_clip, self.grad_clip )
             params_policy = params_policy - self.custom_lr_rate * params_policy_grad
         params_policy = [self.kx, self.kv]
@@ -167,14 +173,46 @@ class optimizer(Node):
         return op_kx, op_kv
     
     def find_ref_coord(self, deltaT):
+        # if self.trajectory_type == 'circle':
+        #     pos_vel_acc = circle_pos_vel_acc
+        # else:
+        #     pos_vel_acc = figure8_pos_vel_acc
+        # ref_coord,_,_ = pos_vel_acc(deltaT, self.radius, self. angular_vel, self.center_x, self.center_y)
+        ref_coord,_,_ = self.find_ref_pos_vel_acc(deltaT)
+        return ref_coord.reshape(-1,1)
+    
+    def find_ref_pos_vel_acc(self, deltaT):
         if self.trajectory_type == 'circle':
             pos_vel_acc = circle_pos_vel_acc
         else:
             pos_vel_acc = figure8_pos_vel_acc
-        ref_coord,_,_ = pos_vel_acc(deltaT, self.radius, self. angular_vel, self.center_x, self.center_y)
-        return ref_coord.reshape(-1,1)
+        ref_pos,ref_vel,ref_acc = pos_vel_acc(deltaT, self.radius, self. angular_vel, self.center_x, self.center_y)
+        return ref_pos,ref_vel,ref_acc
+    
+    @jit
+    def get_future_reward_grad(self, state, params_policy, gp_train_x, gp_train_y):
+        states,weights = initialize_sigma_points( self.current_state )
+        reward = self.w1 * (self.kx**2) + self.w2 * (self.kv**2)
+        def body(h, inputs):
+            '''
+            Performs UT-EC with 6 states
+            '''
+            t = h * self.op_dt
+            reward, states, weights = inputs
+            ref_pos, ref_vel, ref_acc = self.find_ref_pos_vel_acc(t)
+            control_inputs, pos_ref, vel_ref = policy( t, states, policy_params, [ref_pos,ref_vel,ref_acc])         # mean_position = get_mean( states, weights )
+            
+            next_states_mean, next_states_cov = get_next_states_with_gp_sigma_inv( states, control_inputs, self.op_dt, [self.gp0, self.gp1, self.gp2], [self.sigma0, self.sigma1, self.sigma2], gp_train_x, gp_train_y )
+            next_states_expanded, next_weights_expanded = sigma_point_expand_with_mean_cov( next_states_mean, next_states_cov, weights)
+            next_states, next_weights = sigma_point_compress( next_states_expanded, next_weights_expanded )
+            states = next_states
+            weights = next_weights
+            reward = reward + reward_func( states, weights, pos_ref, vel_ref ) # reward is loss
+            return reward, states, weights
+        reward =  lax.fori_loop( 0, self.horizon, body, (reward, states, weights) )[0]
+        return reward
 
-    def get_future_reward_grad(self):
+
 
     def publish_optimal_gains(self):
         self.get_logger().info(f'Sending Gains: QUAD_KX = {self.kx}, QUAD_KV = {self.kv}')
