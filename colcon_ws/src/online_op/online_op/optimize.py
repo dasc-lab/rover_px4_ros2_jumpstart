@@ -2,7 +2,8 @@
 import rclpy
 import rclpy.node
 import sys, os
-current_dir = os.path.dirname(os.path.abspath(__file__))
+# current_dir = os.path.dirname(os.path.abspath(__file__))
+current_dir = os.getcwd()
 sys.path.append('./GPJax')
 import gpJax as gpx
 from rclpy.node import Node
@@ -15,6 +16,8 @@ from test_jax_utils import *
 from test_gp_utils import *
 from test_policy import *
 from foresee_msgs.msg import TrajectoryInfo
+from pymavlink import mavutil
+# import pymavparam as pm
 class optimize(Node):
     def __init__(self):
         super().__init__('optimize')
@@ -28,23 +31,32 @@ class optimize(Node):
         
         ###### set up trajectory parameters ######
         self.get_logger().info('Optimizer Node Starts')
-
-        self.declare_parameter('trajectory_type', 'circle')
-        self.trajectory_type = self.get_parameter('trajectory_type').get_parameter_value().string_value
-        self.get_logger().info(f'Trajectory type: {self.trajectory_type}')
-        self.radius = 0.4
-        self.height = -0.5
-        self.center_x = 0.6
-        self.center_y = 0.0
-        self.angular_vel = 1.0
+        self.mavlink_ = mavutil.mavlink_connection('udp:127.0.0.1:14550')
+        self.mavlink_.wait_heartbeat()
 
 
+        # self.declare_parameter('trajectory_type', 'circle')
+        # self.trajectory_type = self.get_parameter('trajectory_type').get_parameter_value().string_value
+        # self.get_logger().info(f'Trajectory type: {self.trajectory_type}')
+        # self.trajectory_type = 'circle'
+        # self.radius = 0.4
+        # self.height = -0.5
+        # self.center_x = 0.6
+        # self.center_y = 0.0
+        # self.angular_vel = 1.0
+        self.trajectory_type = None
+        self.radius = None
+        self.height = None
+        self.center_x = None
+        self.center_y = None
+        self.angular_vel = None
+        self.trajectory_type_valid = False
         ###### set up initial parameters ######
         self.kx = 7
         self.kv = 4
 
-        self.ned_pos = None
-        self.ned_vel = None
+        self.current_pos = None
+        self.current_vel = None
         
         self.pos_ref = None
         self.vel_ref = None
@@ -77,24 +89,27 @@ class optimize(Node):
 		    10)
         
     def trajectory_info_callback(self,msg):
-        self.trajectory_type = msg.type
-        self.radius = msg.radius
-        self.angular_vel = msg.angular_vel
-        self.center_x = msg.center_x
-        self.center_y = msg.centery_y
+        if self.trajectory_type_valid is False:
+            self.trajectory_type = msg.type
+            self.radius = msg.radius
+            self.angular_vel = msg.angular_vel
+            self.center_x = msg.center_x
+            self.center_y = msg.centery_y
+            self.trajectory_type_valid = True
 
     def coordinate_callback(self, msg):
             if self.ref_valid is False:
                 self.ref_valid = True
                 self.initialize_gp()
-                
-            deltaT = (self.get_clock().now().nanoseconds-self.start_time)/10**9
-            ref_coord = self.find_ref_coord(deltaT)
-            self.kx, self.kv = self.optimizer(ref_coord)
-            self.publish_optimal_gains()
+            self.current_pos = [msg.x, msg.y, msg.z]
+            if self.trajectory_type_valid is True:
+                deltaT = (self.get_clock().now().nanoseconds-self.start_time)/10**9
+                ref_coord = self.find_ref_coord(deltaT)
+                self.kx, self.kv = self.optimizer(ref_coord)
+                self.publish_optimal_gains()
 
 
-            
+
     def initialize_gp(self):
         ###### load gaussian process models ######
         gp_file_path = current_dir+'gp_models/'
@@ -106,7 +121,7 @@ class optimize(Node):
         self.gp2 = initialize_gp_prediction(gp_file_z)
         
         ###### load Datasets ######
-        trainset_file_path = 'dataset/'
+        trainset_file_path = current_dir+'dataset/'
         train_x = np.load(trainset_file_path + 'training_disturbance_x.npy')
         train_y = np.load(trainset_file_path + 'training_disturbance_y.npy')
         train_z = np.load(trainset_file_path + 'training_disturbance_z.npy')
@@ -133,8 +148,22 @@ class optimize(Node):
             pos_vel_acc = figure8_pos_vel_acc
         ref_coord,_,_ = pos_vel_acc(deltaT, self.radius, self. angular_vel, self.center_x, self.center_y)
         return ref_coord.reshape(-1,1)
-    def publish_optimal_gains(self):
 
+
+    def publish_optimal_gains(self):
+        self.mavlink_.mav.param_set_send(
+            self.mavlink_.target_system, self.mavlink_.target_component,
+            b'QUAD_KX',
+            self.kx,
+            mavutil.mavlink.MAV_PARAM_TYPE_REAL32
+        )
+
+        self.mavlink_.mav.param_set_send(
+            self.mavlink_.target_system, self.mavlink_.target_component,
+            b'QUAD_KV',
+            self.kv,
+            mavutil.mavlink.MAV_PARAM_TYPE_REAL32
+        )
 
 def main(args=None):
     rclpy.init(args=args)
