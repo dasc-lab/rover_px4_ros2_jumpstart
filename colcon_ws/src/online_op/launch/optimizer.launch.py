@@ -6,7 +6,7 @@ from launch.actions import TimerAction, ExecuteProcess
 def generate_launch_description():
     optimizer = Node(
         
-        package='onlin_op',
+        package='online_op',
         executable='optimizer',
         name='optimizer',
         # namespace='',
