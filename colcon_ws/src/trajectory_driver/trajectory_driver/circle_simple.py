@@ -62,6 +62,7 @@ class driveCircle(Node):
         msg.angular_vel = self.angular_vel
         msg.center_x = self.center_x
         msg.center_y = self.center_y
+        msg.start_time = self.start_time
         return msg
     
     def create_TrajectorySetpoint_msg(self):

@@ -71,8 +71,8 @@ class optimizer(Node):
         
         
         self.clock  = self.get_clock()
-        self.start_time = self.get_clock().now().nanoseconds
-
+        # self.start_time = self.get_clock().now().nanoseconds
+        self.start_time = None
 
         ###### set up Gaussian Process parameters ######
         self.gp0, self.gp1, self.gp2 = None
@@ -109,6 +109,7 @@ class optimizer(Node):
             self.angular_vel = msg.angular_vel
             self.center_x = msg.center_x
             self.center_y = msg.centery_y
+            self.start_time = msg.start_time
             self.trajectory_type_valid = True
 
     def coordinate_callback(self, msg):
@@ -200,6 +201,7 @@ class optimizer(Node):
             t = h * self.op_dt
             reward, states, weights = inputs
             ref_pos, ref_vel, ref_acc = self.find_ref_pos_vel_acc(t)
+            ###### fixed policy ######
             control_inputs, pos_ref, vel_ref = policy( t, states, policy_params, [ref_pos,ref_vel,ref_acc])         # mean_position = get_mean( states, weights )
             
             next_states_mean, next_states_cov = get_next_states_with_gp_sigma_inv( states, control_inputs, self.op_dt, [self.gp0, self.gp1, self.gp2], [self.sigma0, self.sigma1, self.sigma2], gp_train_x, gp_train_y )
