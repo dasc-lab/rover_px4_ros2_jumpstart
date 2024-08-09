@@ -5,7 +5,8 @@ import sys, os
 # current_dir = os.path.dirname(os.path.abspath(__file__))
 current_dir = os.getcwd()
 sys.path.append('./GPJax')
-import gpJax as gpx
+sys.path.append(current_dir + 'GPJax/')
+import gpjax as gpx
 from rclpy.node import Node
 from std_msgs.msg import *
 import numpy as np
