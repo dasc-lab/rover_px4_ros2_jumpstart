@@ -53,7 +53,7 @@ RUN echo "source /home/colcon_ws/install/setup.bash" >> ~/.bashrc
 
 RUN pip3 install setuptools==58.0.4
 RUN pip3 install empy==3.3.4
-RUn echo 'alias px4="ros2 launch all_launch px4.launch.py"' >> ~/.bashrc
+RUN echo 'alias px4="ros2 launch all_launch px4.launch.py"' >> ~/.bashrc
 
 ## install python libraries
 RUN pip3 install rosbags
