@@ -55,9 +55,9 @@ class trajecotry(Node):
 
     def create_vehicle_msg(self):
         msg = VehicleLocalPosition()
-        msg.x, msg.y, msg.z = self.ned_pos
-        msg.vx, msg.vy, msg.vz = self.ned_vel
-        msg.ax, msg.ay, msg.az = self.ned_acc
+        msg.x, msg.y, msg.z = self.ned_pos[0], self.ned_pos[1], self.ned_pos[2]
+        msg.vx, msg.vy, msg.vz = self.ned_vel[0], self.ned_vel[1], self.ned_vel[2]
+        msg.ax, msg.ay, msg.az = self.ned_acc[0], self.ned_acc[1], self.ned_acc[2]
 
         return msg
     
