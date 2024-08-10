@@ -2,10 +2,15 @@
 import rclpy
 import rclpy.node
 import sys, os
-# current_dir = os.path.dirname(os.path.abspath(__file__))
-current_dir = os.getcwd()
-sys.path.append('./GPJax')
-sys.path.append(current_dir + 'GPJax/')
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# current_dir = os.getcwd()
+# sys.path.append('./GPJax')
+home_path = '/home/colcon_ws/src/online_op/online_op/GPJax'
+#sys.path.append(current_dir + '/GPJax/')
+sys.path.append(home_path)
+print(home_path)
+print(sys.path)
+#print(current_dir+'/GPjax/')
 import gpjax as gpx
 from rclpy.node import Node
 from std_msgs.msg import *
