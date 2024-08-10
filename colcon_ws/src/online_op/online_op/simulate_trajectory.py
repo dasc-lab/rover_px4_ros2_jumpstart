@@ -41,16 +41,16 @@ class trajecotry(Node):
 		#     '/px4_1/fmu/in/trajectory_setpoint',
 		#     self.reference_callback,
 		#     10)
-        def coordinate_callback(self, msg):
-            self.ned_pos = msg.pos
-            self.ned_vel = msg.vel
-            self.ned_acc = msg.acc
-            message = self.create_vehicle_msg()
-            self.publisher_.publish(message)
-        def create_vehicle_msg(self):
-            msg = VehicleLocalPosition()
-            msg.x, msg.y, msg.z = self.ned_pos
-            msg.vx, msg.vy, msg.vz = self.ned_vel
-            msg.ax, msg.ay, msg.az = self.ned_acc
+    def coordinate_callback(self, msg):
+        self.ned_pos = msg.pos
+        self.ned_vel = msg.vel
+        self.ned_acc = msg.acc
+        message = self.create_vehicle_msg()
+        self.publisher_.publish(message)
+    def create_vehicle_msg(self):
+        msg = VehicleLocalPosition()
+        msg.x, msg.y, msg.z = self.ned_pos
+        msg.vx, msg.vy, msg.vz = self.ned_vel
+        msg.ax, msg.ay, msg.az = self.ned_acc
 
-            return msg
+        return msg
