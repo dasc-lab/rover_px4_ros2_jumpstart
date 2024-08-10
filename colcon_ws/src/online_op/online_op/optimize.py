@@ -146,7 +146,6 @@ class optimizer(Node):
     def initialize_gp(self):
         ###### load gaussian process models ######
         gp_file_path = home_path_op+'gp_models/'
-        print(gp_file_path)
         gp_file_x = gp_file_path + 'gp_model_x_norm5_clipped.pkl'
         gp_file_y = gp_file_path + 'gp_model_y_norm5_clipped.pkl'
         gp_file_z = gp_file_path + 'gp_model_z_norm5_clipped.pkl'
@@ -161,8 +160,12 @@ class optimizer(Node):
         train_z = np.load(trainset_file_path + 'training_disturbance_z.npy')
         x = np.load(trainset_file_path+'training_input.npy')
         y = np.column_stack((train_x, train_y, train_z))
+        trainset_slice = 100
+        x = x[::trainset_slice]
+        y = y[::trainset_slice].T
         self.training_state = x
         self.training_disturbance = y
+        
         D0 = gpx.Dataset(X=x, y=y[0].reshape(-1,1))
         D1 = gpx.Dataset(X=x, y=y[1].reshape(-1,1))
         D2 = gpx.Dataset(X=x, y=y[2].reshape(-1,1))
