@@ -47,19 +47,19 @@ class trajecotry(Node):
     
     def coordinate_callback(self, msg):
         
-        self.ned_pos = msg.pos
-        self.ned_vel = msg.vel
-        self.ned_acc = msg.acc
-        message = self.create_vehicle_msg()
+        # self.ned_pos = msg.pos
+        # self.ned_vel = msg.vel
+        # self.ned_acc = msg.acc
+        message = self.create_vehicle_msg(msg.pos, msg.vel,msg.acc)
         self.publisher_.publish(message)
 
-    def create_vehicle_msg(self):
+    def create_vehicle_msg(self,ned_pos,ned_vel,ned_acc):
         msg = VehicleLocalPosition()
         print(type(self.ned_pos))
         print(type(self.ned_pos[0]))
-        msg.x, msg.y, msg.z = self.ned_pos[0], self.ned_pos[1], self.ned_pos[2]
-        msg.vx, msg.vy, msg.vz = self.ned_vel[0], self.ned_vel[1], self.ned_vel[2]
-        msg.ax, msg.ay, msg.az = self.ned_acc[0], self.ned_acc[1], self.ned_acc[2]
+        msg.x, msg.y, msg.z = ned_pos[0], ned_pos[1], ned_pos[2]
+        msg.vx, msg.vy, msg.vz = ned_vel[0], ned_vel[1], ned_vel[2]
+        msg.ax, msg.ay, msg.az = ned_acc[0], ned_acc[1], ned_acc[2]
 
         return msg
     
