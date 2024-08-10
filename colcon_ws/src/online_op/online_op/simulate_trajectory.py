@@ -46,7 +46,7 @@ class trajecotry(Node):
         self.ned_acc = np.load("dataset/acc_vec.npy") 
     
     def coordinate_callback(self, msg):
-        print(type(msg.pos))
+        
         self.ned_pos = msg.pos
         self.ned_vel = msg.vel
         self.ned_acc = msg.acc
@@ -55,6 +55,8 @@ class trajecotry(Node):
 
     def create_vehicle_msg(self):
         msg = VehicleLocalPosition()
+        print(type(self.ned_pos))
+        print(type(self.ned_pos[0]))
         msg.x, msg.y, msg.z = self.ned_pos[0], self.ned_pos[1], self.ned_pos[2]
         msg.vx, msg.vy, msg.vz = self.ned_vel[0], self.ned_vel[1], self.ned_vel[2]
         msg.ax, msg.ay, msg.az = self.ned_acc[0], self.ned_acc[1], self.ned_acc[2]
