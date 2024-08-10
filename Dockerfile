@@ -63,7 +63,8 @@ RUN pip3 install pymavlink
 
 RUN pip3 uninstall gpjax
 RUN pip3 install gpjax==0.8.2
-RUN pip3 uninstall jax jaxlib
+RUN pip3 uninstall jax -y 
+RUN pip3 uninstall jaxlib -y
 RUN pip3 install jax==0.4.26 jaxlib==0.4.26
 
 # RUN pip3 uninstall gpjax -y
