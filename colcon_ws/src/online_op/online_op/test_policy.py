@@ -8,7 +8,7 @@ def state_ref(t):
 # policy_params = [14, 7.4]
 policy_params = [7, 4]
 @jit
-def policy( t, states, policy_params,reference):
+def policy( states, policy_params,reference):
     '''
     Expect a multiple states as input. Each state is a column vector.
     Should then return multiple control inputs. Each input should be a column vector

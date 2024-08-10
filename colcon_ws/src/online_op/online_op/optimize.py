@@ -8,8 +8,9 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 home_path = '/home/colcon_ws/src/online_op/online_op/GPJax'
 #sys.path.append(current_dir + '/GPJax/')
 sys.path.append(home_path)
-print(home_path)
-print(sys.path)
+# print(home_path)
+# print(sys.path)
+
 #print(current_dir+'/GPjax/')
 import gpjax as gpx
 from rclpy.node import Node
@@ -128,8 +129,8 @@ class optimizer(Node):
 
             if self.trajectory_type_valid is True:
                 deltaT = (self.get_clock().now().nanoseconds-self.start_time)/10**9
-                ref_coord = self.find_ref_coord(deltaT)
-                self.kx, self.kv = self.optimizer(ref_coord)
+                # ref_coord = self.find_ref_coord(deltaT)
+                self.kx, self.kv = self.optimizer(deltaT)
                 self.publish_optimal_gains()
 
 
@@ -164,13 +165,13 @@ class optimizer(Node):
 
     
 
-    def optimizer(self, ref_coord):
+    def optimizer(self,deltaT):
         gp_train_x = self.training_state
         gp_train_y = self.training_disturbance
         init_state = self.current_pos
         def body(i, inputs):
             params_policy = inputs
-            params_policy_grad = self.get_future_reward_grad( init_state, params_policy, gp_train_x, gp_train_y )
+            params_policy_grad = self.get_future_reward_grad( init_state, params_policy, gp_train_x, gp_train_y, deltaT)
             params_policy_grad = jnp.clip( params_policy_grad, -self.grad_clip, self.grad_clip )
             params_policy = params_policy - self.custom_lr_rate * params_policy_grad
         params_policy = [self.kx, self.kv]
@@ -197,18 +198,18 @@ class optimizer(Node):
         return ref_pos,ref_vel,ref_acc
     
     @jit
-    def get_future_reward_grad(self, state, params_policy, gp_train_x, gp_train_y):
+    def get_future_reward_grad(self, state, params_policy, gp_train_x, gp_train_y,deltaT):
         states,weights = initialize_sigma_points( self.current_state )
         reward = self.w1 * (self.kx**2) + self.w2 * (self.kv**2)
         def body(h, inputs):
             '''
             Performs UT-EC with 6 states
             '''
-            t = h * self.op_dt
+            t = h * self.op_dt+deltaT
             reward, states, weights = inputs
             ref_pos, ref_vel, ref_acc = self.find_ref_pos_vel_acc(t)
             ###### fixed policy ######
-            control_inputs, pos_ref, vel_ref = policy( t, states, policy_params, [ref_pos,ref_vel,ref_acc])         # mean_position = get_mean( states, weights )
+            control_inputs, pos_ref, vel_ref = policy( states, policy_params, [ref_pos,ref_vel,ref_acc])         # mean_position = get_mean( states, weights )
             
             next_states_mean, next_states_cov = get_next_states_with_gp_sigma_inv( states, control_inputs, self.op_dt, [self.gp0, self.gp1, self.gp2], [self.sigma0, self.sigma1, self.sigma2], gp_train_x, gp_train_y )
             next_states_expanded, next_weights_expanded = sigma_point_expand_with_mean_cov( next_states_mean, next_states_cov, weights)
