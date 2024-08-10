@@ -81,7 +81,9 @@ class optimizer(Node):
         self.start_time = None
 
         ###### set up Gaussian Process parameters ######
-        self.gp0, self.gp1, self.gp2 = None
+        self.gp0 = None
+        self.gp1 = None
+        self.gp2 = None
         self.training_state = None
         self.training_disturbance = None
         self.initialize_gp()
