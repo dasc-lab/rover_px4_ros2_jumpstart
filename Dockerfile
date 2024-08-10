@@ -60,7 +60,8 @@ RUN pip3 install rosbags
 RUN pip3 install matplotlib
 RUN pip3 install pymavlink
 RUN pip3 install gpjax
-RUN pip3 uninstall gpjax -y
+# RUN pip3 uninstall gpjax -y
+
 # RUN pip3 install beartype
 # RUN pip3 install jax
 # RUN pip3 install orbax
