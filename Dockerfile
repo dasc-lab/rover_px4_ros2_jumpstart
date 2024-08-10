@@ -59,7 +59,13 @@ RUN echo 'alias px4="ros2 launch all_launch px4.launch.py"' >> ~/.bashrc
 RUN pip3 install rosbags
 RUN pip3 install matplotlib
 RUN pip3 install pymavlink
+
+
+RUN pip3 uninstall gpjax
 RUN pip3 install gpjax==0.8.2
+RUN pip3 unstall jax
+RUN pip3 install jax==0.4.26
+
 # RUN pip3 uninstall gpjax -y
 
 # RUN pip3 install beartype
