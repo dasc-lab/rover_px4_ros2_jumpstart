@@ -1,7 +1,7 @@
 import os, sys
 home_path_op = '/home/colcon_ws/src/online_op/online_op/'
 #sys.path.append(current_dir + '/GPJax/')
-# sys.path.append(home_path_op+'GPJax')
+sys.path.append(home_path_op+'GPJax')
 
 import gpjax as gpx
 import jax.numpy as jnp
