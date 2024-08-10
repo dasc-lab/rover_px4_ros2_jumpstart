@@ -54,3 +54,13 @@ class trajecotry(Node):
         msg.ax, msg.ay, msg.az = self.ned_acc
 
         return msg
+    
+def main(args=None):
+    rclpy.init(args=args)
+
+    node = trajecotry()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+if __name__ == '__main__':
+    main()
