@@ -5,9 +5,9 @@ import sys, os
 current_dir = os.path.dirname(os.path.abspath(__file__))
 # current_dir = os.getcwd()
 # sys.path.append('./GPJax')
-home_path = '/home/colcon_ws/src/online_op/online_op/'
+home_path_op = '/home/colcon_ws/src/online_op/online_op/'
 #sys.path.append(current_dir + '/GPJax/')
-sys.path.append(home_path+'GPJax')
+sys.path.append(home_path_op+'GPJax')
 # print(home_path)
 # print(sys.path)
 
@@ -145,7 +145,7 @@ class optimizer(Node):
 
     def initialize_gp(self):
         ###### load gaussian process models ######
-        gp_file_path = home_path+'gp_models/'
+        gp_file_path = home_path_op+'gp_models/'
         print(gp_file_path)
         gp_file_x = gp_file_path + 'gp_model_x_norm5_clipped.pkl'
         gp_file_y = gp_file_path + 'gp_model_y_norm5_clipped.pkl'
@@ -155,7 +155,7 @@ class optimizer(Node):
         self.gp2 = initialize_gp_prediction(gp_file_z)
         
         ###### load Datasets ######
-        trainset_file_path = home_path+'dataset/'
+        trainset_file_path = home_path_op+'dataset/'
         train_x = np.load(trainset_file_path + 'training_disturbance_x.npy')
         train_y = np.load(trainset_file_path + 'training_disturbance_y.npy')
         train_z = np.load(trainset_file_path + 'training_disturbance_z.npy')
