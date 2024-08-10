@@ -160,13 +160,13 @@ class optimizer(Node):
         train_z = np.load(trainset_file_path + 'training_disturbance_z.npy')
         x = np.load(trainset_file_path+'training_input.npy')
         y = np.column_stack((train_x, train_y, train_z))
-        print(y.shape)
+        
         trainset_slice = 10
         x = x[::trainset_slice]
         y = y[::trainset_slice].T
         self.training_state = x
         self.training_disturbance = y
-        print(y[0].shape)
+        
         D0 = gpx.Dataset(X=x, y=y[0].reshape(-1,1))
         D1 = gpx.Dataset(X=x, y=y[1].reshape(-1,1))
         D2 = gpx.Dataset(X=x, y=y[2].reshape(-1,1))
