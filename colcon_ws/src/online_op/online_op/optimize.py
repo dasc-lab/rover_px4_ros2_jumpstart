@@ -160,7 +160,8 @@ class optimizer(Node):
         train_z = np.load(trainset_file_path + 'training_disturbance_z.npy')
         x = np.load(trainset_file_path+'training_input.npy')
         y = np.column_stack((train_x, train_y, train_z))
-        trainset_slice = 100
+        print(y.shape)
+        trainset_slice = 10
         x = x[::trainset_slice]
         y = y[::trainset_slice].T
         self.training_state = x
