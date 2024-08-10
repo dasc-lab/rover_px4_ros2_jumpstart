@@ -18,7 +18,7 @@ import numpy as np
 from px4_msgs.msg import TrajectorySetpoint, VehicleLocalPosition
 from rclpy.clock import Clock
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
-from test_jax_utils import *
+from .test_jax_utils import *
 from test_gp_utils import *
 from test_policy import *
 from foresee_msgs.msg import TrajectoryInfo
