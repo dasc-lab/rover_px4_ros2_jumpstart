@@ -39,8 +39,7 @@ class optimizer(Node):
         
         ###### set up trajectory parameters ######
         self.get_logger().info('Optimizer Node Starts')
-        self.mavlink_ = mavutil.mavlink_connection('udp:127.0.0.1:14550')
-        self.mavlink_.wait_heartbeat()
+        
 
 
         # self.declare_parameter('trajectory_type', 'circle')
@@ -85,7 +84,9 @@ class optimizer(Node):
         self.gp0, self.gp1, self.gp2 = None
         self.training_state = None
         self.training_disturbance = None
-
+        self.initialize_gp()
+        print("Shape of training x is: ", self.training_state.shape)
+        print("Shape of training y is: ", self.training_disturbance.shape)
         ###### set up optimizer parameters ######
         self.w1 = 0.5
         self.w2 = 0.1
@@ -94,6 +95,10 @@ class optimizer(Node):
         self.custom_lr_rate = 0.1
         self.grad_clip = 1.0
         self.iter_adam_custom = 300
+
+        ###### set up mavlink ######
+        self.mavlink_ = mavutil.mavlink_connection('udp:127.0.0.1:14550')
+        self.mavlink_.wait_heartbeat()
 
         ################## set up Subscription ##################
         self.drone_coordinates = self.create_subscription(
@@ -120,9 +125,9 @@ class optimizer(Node):
             self.trajectory_type_valid = True
 
     def coordinate_callback(self, msg):
-            if self.ref_valid is False:
-                self.ref_valid = True
-                self.initialize_gp()
+            # if self.ref_valid is False:
+            #     self.ref_valid = True
+            #     self.initialize_gp()
             self.current_pos = [msg.x, msg.y, msg.z]
             self.current_vel = [msg.vx,msg.vy,msg.vz]
             self.current_state = np.array(self.current_pos + self.current_vel)
