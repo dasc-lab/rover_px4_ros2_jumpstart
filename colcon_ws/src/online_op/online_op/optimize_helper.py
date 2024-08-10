@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 import numpy as np
-from test_jax_utils import *
+from .test_jax_utils import *
 def initialize_sigma_points(X):
         '''
         Returns Equally weighted Sigma Particles
