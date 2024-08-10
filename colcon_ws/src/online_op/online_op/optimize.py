@@ -146,6 +146,7 @@ class optimizer(Node):
     def initialize_gp(self):
         ###### load gaussian process models ######
         gp_file_path = home_path+'gp_models/'
+        print(gp_file_path)
         gp_file_x = gp_file_path + 'gp_model_x_norm5_clipped.pkl'
         gp_file_y = gp_file_path + 'gp_model_y_norm5_clipped.pkl'
         gp_file_z = gp_file_path + 'gp_model_z_norm5_clipped.pkl'
