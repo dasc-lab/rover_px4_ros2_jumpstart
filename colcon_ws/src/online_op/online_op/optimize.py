@@ -189,6 +189,7 @@ class optimizer(Node):
             params_policy_grad = self.get_future_reward_grad( init_state, params_policy, gp_train_x, gp_train_y, deltaT)
             params_policy_grad = jnp.clip( params_policy_grad, -self.grad_clip, self.grad_clip )
             params_policy = params_policy - self.custom_lr_rate * params_policy_grad
+            return params_policy
         params_policy = [self.kx, self.kv]
         params_policy = lax.fori_loop(0, self.iter_adam_custom, body, params_policy)
         op_kx = params_policy[0]
