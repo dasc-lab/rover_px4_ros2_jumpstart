@@ -192,13 +192,13 @@ def generate_reference_vectorize(trajectory, time_array, cir_radius, cir_angular
     
 #     return ref_pos, ref_vel, ref_acc
 
-time_array = generate_time(0, 5, 0.1)
+# time_array = generate_time(0, 5, 0.1)
 
-ref_pos, ref_vel, ref_acc = generate_reference_circle(time_array,cir_radius, cir_angular_vel, cir_origin_x, cir_origin_y)
-vec_pos, vec_vel, vec_acc = generate_reference_vectorize(circle_pos_vel_acc, time_array, cir_radius, cir_angular_vel, cir_origin_x, cir_origin_y)
-print("Positions match:", jnp.allclose(ref_pos, vec_pos))
-print("Velocities match:", jnp.allclose(ref_pos, vec_pos))
-print("Accelerations match:", jnp.allclose(ref_acc, vec_acc))
+# ref_pos, ref_vel, ref_acc = generate_reference_circle(time_array,cir_radius, cir_angular_vel, cir_origin_x, cir_origin_y)
+# vec_pos, vec_vel, vec_acc = generate_reference_vectorize(circle_pos_vel_acc, time_array, cir_radius, cir_angular_vel, cir_origin_x, cir_origin_y)
+# print("Positions match:", jnp.allclose(ref_pos, vec_pos))
+# print("Velocities match:", jnp.allclose(ref_pos, vec_pos))
+# print("Accelerations match:", jnp.allclose(ref_acc, vec_acc))
 
 
 # assert jnp.array_equal(ref_pos, vec_pos) and jnp.array_equal(ref_vel,vec_vel) and jnp.array_equal(ref_acc, vec_acc)
