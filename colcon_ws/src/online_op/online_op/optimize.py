@@ -96,9 +96,9 @@ class optimizer(Node):
         ###### set up optimizer parameters ######
         # w1 = 0.5
         # w2 = 0.1
-        self.horizon = 100
+        self.horizon = 50
         self.op_dt = 0.05
-        self.custom_lr_rate = 0.1
+        self.custom_lr_rate = 0.005
         self.grad_clip = 100.0
         self.iter_adam_custom = 200
         
