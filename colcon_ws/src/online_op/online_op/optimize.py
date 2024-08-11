@@ -55,6 +55,7 @@ class optimizer(Node):
         # self.center_y = 0.0
         # self.angular_vel = 1.0
         self.trajectory_type = None
+        self.trajectory_type_int = 0
         self.radius = None
         self.height = None
         self.center_x = None
@@ -125,6 +126,7 @@ class optimizer(Node):
     def trajectory_info_callback(self,msg):
         if self.trajectory_type_valid is False:
             self.trajectory_type = msg.type
+            self.trajectory_type_int = 0 if self.trajectory_type == 'circle' else 1
             self.radius = msg.radius
             self.angular_vel = msg.angular_vel
             self.center_x = msg.center_x
@@ -199,7 +201,7 @@ class optimizer(Node):
         print("deltaT type is: ",type(deltaT))
         def body(i, inputs):
             params_policy = inputs
-            params_policy_grad = get_future_reward_grad( init_state, params_policy, [self.gp0, self.gp1, self.gp2], [self.sigma0, self.sigma1, self.sigma2], gp_train_x, gp_train_y, deltaT, self.horizon, self.trajectory_type, [self.radius, self.angular_vel, self.center_x, self.center_y])
+            params_policy_grad = get_future_reward_grad( init_state, params_policy, [self.gp0, self.gp1, self.gp2], [self.sigma0, self.sigma1, self.sigma2], gp_train_x, gp_train_y, deltaT, self.horizon, self.trajectory_type_int, [self.radius, self.angular_vel, self.center_x, self.center_y])
             params_policy_grad = jnp.clip( params_policy_grad, -self.grad_clip, self.grad_clip )
             params_policy = params_policy - self.custom_lr_rate * params_policy_grad
             return params_policy
