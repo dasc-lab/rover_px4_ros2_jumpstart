@@ -26,6 +26,7 @@ from foresee_msgs.msg import TrajectoryInfo
 from pymavlink import mavutil
 from .optimize_helper import *
 from jax import grad, jit
+os.environ['JAX_TRACEBACK_FILTERING'] = 'off'
 # import pymavparam as pm
 class optimizer(Node):
     def __init__(self):
