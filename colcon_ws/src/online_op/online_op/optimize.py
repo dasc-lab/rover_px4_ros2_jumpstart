@@ -88,8 +88,7 @@ class optimizer(Node):
         self.training_disturbance = None
         self.initialize_gp()
         self.get_logger().info("Gaussian Process Initialized")
-        print("Shape of training x is: ", self.training_state.shape)
-        print("Shape of training y is: ", self.training_disturbance.shape)
+        
         ###### set up optimizer parameters ######
         self.w1 = 0.5
         self.w2 = 0.1
@@ -101,8 +100,9 @@ class optimizer(Node):
 
         ###### set up mavlink ######
         # self.mavlink_ = mavutil.mavlink_connection('udp:127.0.0.1:14550')
+        self.mavlink_ = mavutil.mavlink_connection('/dev/ttyUSB0', baud=115200)
         # self.mavlink_.wait_heartbeat()
-
+        self.get_logger().info("Mavlink Connected")
         ################## set up Subscription ##################
         self.drone_coordinates = self.create_subscription(
 		    VehicleLocalPosition,
@@ -134,8 +134,8 @@ class optimizer(Node):
             self.current_pos = [msg.x, msg.y, msg.z]
             self.current_vel = [msg.vx,msg.vy,msg.vz]
             self.current_state = jnp.array(self.current_pos + self.current_vel)
-            print(self.current_state.shape)
-            assert(self.current_state.shape is (6,1))
+            
+            assert(self.current_state.shape is (6,))
             if self.trajectory_type_valid is True:
                 deltaT = (self.get_clock().now().nanoseconds-self.start_time)/10**9
                 # ref_coord = self.find_ref_coord(deltaT)
@@ -186,7 +186,7 @@ class optimizer(Node):
         
         gp_train_y = self.training_disturbance
         init_state = self.current_pos
-        print(type(init_state))
+        print("initial state type is: ",type(init_state))
         def body(i, inputs):
             params_policy = inputs
             params_policy_grad = self.get_future_reward_grad( init_state, params_policy, gp_train_x, gp_train_y, deltaT)
