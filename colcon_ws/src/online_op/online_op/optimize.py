@@ -126,8 +126,8 @@ class optimizer(Node):
     def trajectory_info_callback(self,msg):
         if self.trajectory_type_valid is False:
             self.trajectory_type = msg.type
-            self.trajectory_type_int = 0 if self.trajectory_type == 'circle' else 1
-            print(self.trajectory_type, self.trajectory_type == 'circle')
+            self.trajectory_type_int = 0 if self.trajectory_type is 'circle' else 1
+            print(self.trajectory_type, self.trajectory_type is 'circle')
             self.radius = msg.radius
             self.angular_vel = msg.angular_vel
             self.center_x = msg.center_x
