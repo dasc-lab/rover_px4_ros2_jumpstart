@@ -99,7 +99,7 @@ class optimizer(Node):
         self.horizon = 50
         self.op_dt = 0.05
         self.custom_lr_rate = 0.005
-        self.grad_clip = 100.0
+        self.grad_clip = 1.0
         self.iter_adam_custom = 200
         
         ###### set up mavlink ######
