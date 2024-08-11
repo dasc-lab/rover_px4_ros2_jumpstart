@@ -92,11 +92,11 @@ class optimizer(Node):
         ###### set up optimizer parameters ######
         self.w1 = 0.5
         self.w2 = 0.1
-        self.horizon = 50
+        self.horizon = 100
         self.op_dt = 0.05
         self.custom_lr_rate = 0.1
         self.grad_clip = 1.0
-        self.iter_adam_custom = 300
+        self.iter_adam_custom = 200
 
         ###### set up mavlink ######
         # self.mavlink_ = mavutil.mavlink_connection('udp:127.0.0.1:14550')
