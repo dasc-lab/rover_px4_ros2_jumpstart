@@ -100,7 +100,7 @@ class optimizer(Node):
 
         ###### set up mavlink ######
         # self.mavlink_ = mavutil.mavlink_connection('udp:127.0.0.1:14550')
-        self.mavlink_ = mavutil.mavlink_connection('/dev/ttyUSB0', baud=115200)
+        # self.mavlink_ = mavutil.mavlink_connection('/dev/ttyUSB0', baud=115200)
         # self.mavlink_.wait_heartbeat()
         self.get_logger().info("Mavlink Connected")
         ################## set up Subscription ##################
