@@ -28,6 +28,7 @@ from .optimize_helper import *
 from jax import grad, jit
 os.environ['JAX_TRACEBACK_FILTERING'] = 'off'
 # import pymavparam as pm
+
 class optimizer(Node):
     def __init__(self):
         super().__init__('optimizer')
@@ -92,8 +93,8 @@ class optimizer(Node):
         self.get_logger().info("Gaussian Process Initialized")
         
         ###### set up optimizer parameters ######
-        self.w1 = 0.5
-        self.w2 = 0.1
+        # w1 = 0.5
+        # w2 = 0.1
         self.horizon = 100
         self.op_dt = 0.05
         self.custom_lr_rate = 0.1
@@ -106,7 +107,7 @@ class optimizer(Node):
         # self.mavlink_.wait_heartbeat()
         self.get_logger().info("Mavlink Connected")
 
-        self.get_future_reward_grad = jit(grad(self.get_future_reward, argnums=1))
+        
         ################## set up Subscription ##################
         self.drone_coordinates = self.create_subscription(
 		    VehicleLocalPosition,
@@ -198,7 +199,7 @@ class optimizer(Node):
         print("deltaT type is: ",type(deltaT))
         def body(i, inputs):
             params_policy = inputs
-            params_policy_grad = self.get_future_reward_grad( init_state, params_policy, gp_train_x, gp_train_y, deltaT)
+            params_policy_grad = get_future_reward_grad( init_state, params_policy, gp_train_x, gp_train_y, deltaT)
             params_policy_grad = jnp.clip( params_policy_grad, -self.grad_clip, self.grad_clip )
             params_policy = params_policy - self.custom_lr_rate * params_policy_grad
             return params_policy
@@ -223,34 +224,8 @@ class optimizer(Node):
             pos_vel_acc = circle_pos_vel_acc
         else:
             pos_vel_acc = figure8_pos_vel_acc
-        ref_pos,ref_vel,ref_acc = pos_vel_acc(deltaT, self.radius, self. angular_vel, self.center_x, self.center_y)
+        ref_pos,ref_vel,ref_acc = pos_vel_acc(deltaT, self.radius, self.angular_vel, self.center_x, self.center_y)
         return ref_pos,ref_vel,ref_acc
-    
-    @jit
-    def get_future_reward(self, state, params_policy, gp_train_x, gp_train_y,deltaT):
-        print("Calculating Reward")
-        states,weights = initialize_sigma_points( self.current_state )
-        reward = self.w1 * (self.kx**2) + self.w2 * (self.kv**2)
-        def body(h, inputs):
-            '''
-            Performs UT-EC with 6 states
-            '''
-            t = h * self.op_dt+deltaT
-            reward, states, weights = inputs
-            ref_pos, ref_vel, ref_acc = self.find_ref_pos_vel_acc(t)
-            ###### fixed policy ######
-            
-            control_inputs, pos_ref, vel_ref = policy( state, params_policy, [ref_pos,ref_vel,ref_acc])         # mean_position = get_mean( states, weights )
-            
-            next_states_mean, next_states_cov = get_next_states_with_gp_sigma_inv( states, control_inputs, self.op_dt, [self.gp0, self.gp1, self.gp2], [self.sigma0, self.sigma1, self.sigma2], gp_train_x, gp_train_y )
-            next_states_expanded, next_weights_expanded = sigma_point_expand_with_mean_cov( next_states_mean, next_states_cov, weights)
-            next_states, next_weights = sigma_point_compress( next_states_expanded, next_weights_expanded )
-            states = next_states
-            weights = next_weights
-            reward = reward + reward_func( states, weights, pos_ref, vel_ref ) # reward is loss
-            return reward, states, weights
-        reward =  lax.fori_loop( 0, self.horizon, body, (reward, states, weights) )[0]
-        return reward
 
 
 
