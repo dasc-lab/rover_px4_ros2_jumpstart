@@ -178,6 +178,7 @@ class optimizer(Node):
     
 
     def optimizer(self,deltaT):
+        print("Optimizing")
         gp_train_x = self.training_state
         gp_train_y = self.training_disturbance
         init_state = self.current_pos
@@ -211,6 +212,7 @@ class optimizer(Node):
     
     @jit
     def get_future_reward_grad(self, state, params_policy, gp_train_x, gp_train_y,deltaT):
+        print("Calculating Reward")
         states,weights = initialize_sigma_points( self.current_state )
         reward = self.w1 * (self.kx**2) + self.w2 * (self.kv**2)
         def body(h, inputs):
