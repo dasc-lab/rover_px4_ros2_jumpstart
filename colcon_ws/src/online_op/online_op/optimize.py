@@ -203,7 +203,7 @@ class optimizer(Node):
         ref_pos,ref_vel,ref_acc = self.find_ref_pos_vel_acc(deltaT)
         def body(i, inputs):
             params_policy = inputs
-            params_policy_grad = get_future_reward_grad( init_state, params_policy, [self.gp0, self.gp1, self.gp2], [self.sigma0, self.sigma1, self.sigma2], gp_train_x, gp_train_y, deltaT, self.horizon)
+            params_policy_grad = get_future_reward_grad( init_state, params_policy, [self.gp0, self.gp1, self.gp2], [self.sigma0, self.sigma1, self.sigma2], gp_train_x, gp_train_y, deltaT, self.horizon, [ref_pos, ref_vel,ref_acc])
             params_policy_grad = jnp.clip( params_policy_grad, -self.grad_clip, self.grad_clip )
             params_policy = params_policy - self.custom_lr_rate * params_policy_grad
             return params_policy
