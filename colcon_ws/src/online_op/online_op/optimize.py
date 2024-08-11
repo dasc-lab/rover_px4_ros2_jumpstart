@@ -99,7 +99,7 @@ class optimizer(Node):
         self.horizon = 100
         self.op_dt = 0.05
         self.custom_lr_rate = 0.1
-        self.grad_clip = 1.0
+        self.grad_clip = 100.0
         self.iter_adam_custom = 200
         
         ###### set up mavlink ######
@@ -196,11 +196,11 @@ class optimizer(Node):
         gp_train_y = self.training_disturbance
         params_policy = jnp.array([self.kx, self.kv])
         init_state = jnp.array(self.current_state)
-        print("initial state type is: ",type(init_state))
-        print("initial state shape is ", init_state.shape)
-        print("policy params type is: ",type(params_policy))
-        print("gp train type is: ",type(gp_train_x), type(gp_train_y))
-        print("deltaT type is: ",type(deltaT))
+        # print("initial state type is: ",type(init_state))
+        # print("initial state shape is ", init_state.shape)
+        # print("policy params type is: ",type(params_policy))
+        # print("gp train type is: ",type(gp_train_x), type(gp_train_y))
+        # print("deltaT type is: ",type(deltaT))
         ref_pos,ref_vel,ref_acc = self.find_ref_pos_vel_acc(deltaT)
         
         def body(i, inputs):
