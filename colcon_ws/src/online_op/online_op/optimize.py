@@ -158,11 +158,11 @@ class optimizer(Node):
         
         ###### load Datasets ######
         trainset_file_path = home_path_op+'dataset/'
-        train_x = np.load(trainset_file_path + 'training_disturbance_x.npy')
-        train_y = np.load(trainset_file_path + 'training_disturbance_y.npy')
-        train_z = np.load(trainset_file_path + 'training_disturbance_z.npy')
-        x = np.load(trainset_file_path+'training_input.npy')
-        y = np.column_stack((train_x, train_y, train_z))
+        train_x = jnp.load(trainset_file_path + 'training_disturbance_x.npy')
+        train_y = jnp.load(trainset_file_path + 'training_disturbance_y.npy')
+        train_z = jnp.load(trainset_file_path + 'training_disturbance_z.npy')
+        x = jnp.load(trainset_file_path+'training_input.npy')
+        y = jnp.column_stack((train_x, train_y, train_z))
         
         trainset_slice = 10
         x = x[::trainset_slice]
@@ -194,7 +194,7 @@ class optimizer(Node):
             params_policy = params_policy - self.custom_lr_rate * params_policy_grad
             return params_policy
         params_policy = jnp.array([self.kx, self.kv])
-        print(type(self.kx), type(self.kv))
+        # print(type(self.kx), type(self.kv))
         params_policy = lax.fori_loop(0, self.iter_adam_custom, body, params_policy)
         op_kx = params_policy[0]
         op_kv = params_policy[1]
