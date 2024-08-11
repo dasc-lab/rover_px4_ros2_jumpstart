@@ -4,6 +4,9 @@ from jax import grad, jit
 from .test_jax_utils import *
 from .test_gp_utils import get_next_states_with_gp_sigma_inv
 from .test_policy import policy, circle_pos_vel_acc, figure8_pos_vel_acc
+
+
+horizon = 100
 def initialize_sigma_points(X):
         '''
         Returns Equally weighted Sigma Particles
@@ -31,7 +34,7 @@ def reward_func(states, weights, pos_ref, vel_ref):
     reward = pos_factor * jnp.sum(ex_ev_mean[0:3] ** 2) + vel_factor * jnp.sum(ex_ev_mean[3:6] ** 2)
     return reward
 @jit
-def get_future_reward(state, params_policy, gps, sigma_inv, gp_train_x, gp_train_y, deltaT, horizon, reference_pos_vel_acc):
+def get_future_reward(state, params_policy, gps, sigma_inv, gp_train_x, gp_train_y, deltaT, reference_pos_vel_acc):
     print("Calculating Reward")
     print("state vector shape is: ", state.shape)
     states,weights = initialize_sigma_points( state )
