@@ -25,6 +25,7 @@ from .test_policy import *
 from foresee_msgs.msg import TrajectoryInfo
 from pymavlink import mavutil
 from .optimize_helper import *
+from jax import grad, jit
 # import pymavparam as pm
 class optimizer(Node):
     def __init__(self):
@@ -97,12 +98,14 @@ class optimizer(Node):
         self.custom_lr_rate = 0.1
         self.grad_clip = 1.0
         self.iter_adam_custom = 200
-
+        
         ###### set up mavlink ######
         # self.mavlink_ = mavutil.mavlink_connection('udp:127.0.0.1:14550')
         # self.mavlink_ = mavutil.mavlink_connection('/dev/ttyUSB0', baud=115200)
         # self.mavlink_.wait_heartbeat()
         self.get_logger().info("Mavlink Connected")
+
+        self.get_future_reward_grad = jit(grad(self.get_future_reward, argnums=1))
         ################## set up Subscription ##################
         self.drone_coordinates = self.create_subscription(
 		    VehicleLocalPosition,
@@ -181,10 +184,12 @@ class optimizer(Node):
     
 
     def optimize(self,deltaT):
+        
         print("Optimizing")
         gp_train_x = self.training_state
         
         gp_train_y = self.training_disturbance
+        params_policy = jnp.array([self.kx, self.kv])
         init_state = jnp.array(self.current_pos)
         print("initial state type is: ",type(init_state))
         def body(i, inputs):
@@ -193,7 +198,7 @@ class optimizer(Node):
             params_policy_grad = jnp.clip( params_policy_grad, -self.grad_clip, self.grad_clip )
             params_policy = params_policy - self.custom_lr_rate * params_policy_grad
             return params_policy
-        params_policy = jnp.array([self.kx, self.kv])
+        
         # print(type(self.kx), type(self.kv))
         params_policy = lax.fori_loop(0, self.iter_adam_custom, body, params_policy)
         op_kx = params_policy[0]
@@ -218,7 +223,7 @@ class optimizer(Node):
         return ref_pos,ref_vel,ref_acc
     
     @jit
-    def get_future_reward_grad(self, state, params_policy, gp_train_x, gp_train_y,deltaT):
+    def get_future_reward(self, state, params_policy, gp_train_x, gp_train_y,deltaT):
         print("Calculating Reward")
         states,weights = initialize_sigma_points( self.current_state )
         reward = self.w1 * (self.kx**2) + self.w2 * (self.kv**2)
@@ -231,7 +236,7 @@ class optimizer(Node):
             ref_pos, ref_vel, ref_acc = self.find_ref_pos_vel_acc(t)
             ###### fixed policy ######
             
-            control_inputs, pos_ref, vel_ref = policy( self.current_state, params_policy, [ref_pos,ref_vel,ref_acc])         # mean_position = get_mean( states, weights )
+            control_inputs, pos_ref, vel_ref = policy( state, params_policy, [ref_pos,ref_vel,ref_acc])         # mean_position = get_mean( states, weights )
             
             next_states_mean, next_states_cov = get_next_states_with_gp_sigma_inv( states, control_inputs, self.op_dt, [self.gp0, self.gp1, self.gp2], [self.sigma0, self.sigma1, self.sigma2], gp_train_x, gp_train_y )
             next_states_expanded, next_weights_expanded = sigma_point_expand_with_mean_cov( next_states_mean, next_states_cov, weights)
