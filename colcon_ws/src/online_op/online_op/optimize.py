@@ -236,6 +236,7 @@ class optimizer(Node):
 
 
     def publish_optimal_gains(self):
+        print(self.kx, self.kv)
         self.get_logger().info(f'Sending Gains: QUAD_KX = {self.kx}, QUAD_KV = {self.kv}')
         self.mavlink_.mav.param_set_send(
             self.mavlink_.target_system, self.mavlink_.target_component,
