@@ -138,7 +138,7 @@ class optimizer(Node):
             if self.trajectory_type_valid is True:
                 deltaT = (self.get_clock().now().nanoseconds-self.start_time)/10**9
                 # ref_coord = self.find_ref_coord(deltaT)
-                self.kx, self.kv = self.optimizer(deltaT)
+                self.kx, self.kv = self.optimize(deltaT)
                 self.publish_optimal_gains()
 
 
@@ -179,7 +179,7 @@ class optimizer(Node):
 
     
 
-    def optimizer(self,deltaT):
+    def optimize(self,deltaT):
         print("Optimizing")
         gp_train_x = self.training_state
         gp_train_y = self.training_disturbance
