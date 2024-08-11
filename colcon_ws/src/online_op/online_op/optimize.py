@@ -135,7 +135,7 @@ class optimizer(Node):
             self.current_vel = [msg.vx,msg.vy,msg.vz]
             self.current_state = jnp.array(self.current_pos + self.current_vel)
             print(self.current_state.shape)
-            assert(self.current_state.shape is (6,))
+            # assert(self.current_state.shape is (6,))
             if self.trajectory_type_valid is True:
                 deltaT = (self.get_clock().now().nanoseconds-self.start_time)/10**9
                 # ref_coord = self.find_ref_coord(deltaT)
