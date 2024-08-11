@@ -87,6 +87,7 @@ class optimizer(Node):
         self.training_state = None
         self.training_disturbance = None
         self.initialize_gp()
+        self.get_logger().info("Gaussian Process Initialized")
         print("Shape of training x is: ", self.training_state.shape)
         print("Shape of training y is: ", self.training_disturbance.shape)
         ###### set up optimizer parameters ######
@@ -99,8 +100,8 @@ class optimizer(Node):
         self.iter_adam_custom = 300
 
         ###### set up mavlink ######
-        self.mavlink_ = mavutil.mavlink_connection('udp:127.0.0.1:14550')
-        self.mavlink_.wait_heartbeat()
+        # self.mavlink_ = mavutil.mavlink_connection('udp:127.0.0.1:14550')
+        # self.mavlink_.wait_heartbeat()
 
         ################## set up Subscription ##################
         self.drone_coordinates = self.create_subscription(
@@ -144,6 +145,7 @@ class optimizer(Node):
 
 
     def initialize_gp(self):
+        self.get_logger().info('Initializing Gaussian Process Models')
         ###### load gaussian process models ######
         gp_file_path = home_path_op+'gp_models/'
         gp_file_x = gp_file_path + 'gp_model_x_norm5_clipped.pkl'
