@@ -123,7 +123,7 @@ class optimizer(Node):
             self.radius = msg.radius
             self.angular_vel = msg.angular_vel
             self.center_x = msg.center_x
-            self.center_y = msg.centery_y
+            self.center_y = msg.center_y
             self.start_time = msg.start_time
             self.trajectory_type_valid = True
 
