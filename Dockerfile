@@ -68,7 +68,7 @@ RUN pip3 uninstall jaxlib -y
 RUN pip3 install jax==0.4.26 jaxlib==0.4.26
 RUN pip3 uninstall gpjax -y
 RUN pip3 install serial
-RUN pip3 uninstall numpy
+RUN pip3 uninstall numpy -y
 RUN pip3 install numpy==1.24.3
 
 # RUN pip3 uninstall gpjax -y
