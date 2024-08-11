@@ -6,7 +6,7 @@ def state_ref(t):
     pos, vel, acc = figure8_pos_vel_acc( t, figure8_radius[dataset_index], figure8_angular_vel[dataset_index], figure8_origin_x[dataset_index], figure8_origin_y[dataset_index] )
     return pos.reshape(-1,1), vel.reshape(-1,1), acc.reshape(-1,1)
 # policy_params = [14, 7.4]
-policy_params = [7, 4]
+# policy_params = [7, 4]
 @jit
 def policy( states, policy_params,reference):
     '''

@@ -230,7 +230,8 @@ class optimizer(Node):
             reward, states, weights = inputs
             ref_pos, ref_vel, ref_acc = self.find_ref_pos_vel_acc(t)
             ###### fixed policy ######
-            control_inputs, pos_ref, vel_ref = policy( states, policy_params, [ref_pos,ref_vel,ref_acc])         # mean_position = get_mean( states, weights )
+            
+            control_inputs, pos_ref, vel_ref = policy( self.current_state, params_policy, [ref_pos,ref_vel,ref_acc])         # mean_position = get_mean( states, weights )
             
             next_states_mean, next_states_cov = get_next_states_with_gp_sigma_inv( states, control_inputs, self.op_dt, [self.gp0, self.gp1, self.gp2], [self.sigma0, self.sigma1, self.sigma2], gp_train_x, gp_train_y )
             next_states_expanded, next_weights_expanded = sigma_point_expand_with_mean_cov( next_states_mean, next_states_cov, weights)
