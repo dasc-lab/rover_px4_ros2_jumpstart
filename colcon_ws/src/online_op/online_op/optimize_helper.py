@@ -33,6 +33,7 @@ def reward_func(states, weights, pos_ref, vel_ref):
 @jit
 def get_future_reward(state, params_policy, gps, sigma_inv, gp_train_x, gp_train_y, deltaT, horizon, reference_pos_vel_acc):
     print("Calculating Reward")
+    print("state vector shape is: ", state.shape)
     states,weights = initialize_sigma_points( state )
     w1 = 0.5
     w2 = 0.1
