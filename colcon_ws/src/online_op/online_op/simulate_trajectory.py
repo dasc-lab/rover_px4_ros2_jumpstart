@@ -57,7 +57,7 @@ class trajecotry(Node):
         msg = VehicleLocalPosition()
         # print(type(self.ned_pos))
         # print(type(self.ned_pos[0]))
-        msg.x, msg.y, msg.z = ned_pos[0], ned_pos[1], ned_pos[2]
+        msg.x, msg.y, msg.z = float(ned_pos[0]), ned_pos[1], ned_pos[2]
         msg.vx, msg.vy, msg.vz = ned_vel[0], ned_vel[1], ned_vel[2]
         msg.ax, msg.ay, msg.az = ned_acc[0], ned_acc[1], ned_acc[2]
 
