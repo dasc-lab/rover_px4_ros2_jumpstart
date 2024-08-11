@@ -23,6 +23,9 @@ def policy( states, policy_params,reference):
 
     # pos_ref, vel_ref, acc_ref = state_ref(t)
     pos_ref, vel_ref, acc_ref = reference
+    pos_ref = jnp.reshape(pos_ref, (-1,1))
+    vel_ref = jnp.reshape(vel_ref, (-1,1))
+    acc_ref = jnp.reshape(acc_ref, (-1,1))
     ex = states[0:3] - pos_ref
     # ex = lax.cond( jnp.linalg.norm(ex)>2, lambda z: 2.0 * z / jnp.linalg.norm(z), lambda z: z, ex )
     ev = states[3:6] - vel_ref
