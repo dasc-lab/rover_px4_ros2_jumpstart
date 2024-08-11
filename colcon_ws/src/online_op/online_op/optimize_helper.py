@@ -52,7 +52,7 @@ def get_future_reward(state, params_policy, gps, sigma_inv, gp_train_x, gp_train
         ref_pos,ref_vel,ref_acc = reference_pos_vel_acc
         ###### fixed policy ######
         
-        control_inputs, pos_ref, vel_ref = policy( state, params_policy, [ref_pos,ref_vel,ref_acc])         # mean_position = get_mean( states, weights )
+        control_inputs, pos_ref, vel_ref = policy( states, params_policy, [ref_pos,ref_vel,ref_acc])         # mean_position = get_mean( states, weights )
         
         next_states_mean, next_states_cov = get_next_states_with_gp_sigma_inv( states, control_inputs, op_dt, [gp0, gp1, gp2], [sigma0, sigma1, sigma2], gp_train_x, gp_train_y )
         next_states_expanded, next_weights_expanded = sigma_point_expand_with_mean_cov( next_states_mean, next_states_cov, weights)
@@ -68,7 +68,7 @@ get_future_reward_grad = jit(grad(get_future_reward, argnums=1))
 def find_ref_pos_vel_acc(trajectory_type, deltaT, parameters):
         radius, angular_vel, center_x, center_y = parameters
         print(f"radius: {radius}, ")
-        if trajectory_type == 'circle': #' circle'
+        if trajectory_type == 'circle': #'circle'
             pos_vel_acc = circle_pos_vel_acc
         else:
             pos_vel_acc = figure8_pos_vel_acc
