@@ -98,7 +98,7 @@ class optimizer(Node):
         # w2 = 0.1
         
         # self.op_dt = 0.05
-        self.custom_lr_rate = 0.1
+        self.custom_lr_rate = 0.5
         self.grad_clip = 1.0
         self.iter_adam_custom = 200
         
