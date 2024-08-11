@@ -182,6 +182,7 @@ class optimizer(Node):
     def optimize(self,deltaT):
         print("Optimizing")
         gp_train_x = self.training_state
+        print(type(self.training_state))
         gp_train_y = self.training_disturbance
         init_state = self.current_pos
         def body(i, inputs):
@@ -190,7 +191,8 @@ class optimizer(Node):
             params_policy_grad = jnp.clip( params_policy_grad, -self.grad_clip, self.grad_clip )
             params_policy = params_policy - self.custom_lr_rate * params_policy_grad
             return params_policy
-        params_policy = [self.kx, self.kv]
+        params_policy = jnp.array([self.kx, self.kv])
+        print(type(self.kx), type(self.kv))
         params_policy = lax.fori_loop(0, self.iter_adam_custom, body, params_policy)
         op_kx = params_policy[0]
         op_kv = params_policy[1]
