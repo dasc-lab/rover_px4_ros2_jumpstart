@@ -195,7 +195,7 @@ class optimizer(Node):
         
         gp_train_y = self.training_disturbance
         params_policy = jnp.array([self.kx, self.kv])
-        init_state = jnp.array(self.current_pos)
+        init_state = jnp.array(self.current_state)
         print("initial state type is: ",type(init_state))
         print("initial state shape is ", init_state.shape)
         print("policy params type is: ",type(params_policy))
