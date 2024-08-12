@@ -6,7 +6,7 @@ from .test_gp_utils import get_next_states_with_gp_sigma_inv
 from .test_policy import policy, circle_pos_vel_acc, figure8_pos_vel_acc
 
 
-horizon = 300
+horizon = 50
 def initialize_sigma_points(X):
         '''
         Returns Equally weighted Sigma Particles
