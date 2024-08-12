@@ -4,7 +4,7 @@ from jax import grad, jit
 from .test_jax_utils import *
 from .test_gp_utils import get_next_states_with_gp_sigma_inv
 from .test_policy import policy, circle_pos_vel_acc, figure8_pos_vel_acc
-
+from jax.experimental import host_callback as hcb
 
 horizon = 50
 def initialize_sigma_points(X):
@@ -28,6 +28,8 @@ def reward_func(states, weights, pos_ref, vel_ref):
     print("pos error: ", ex)
     ev = states[3:6] - vel_ref
     print("vel error: ", ev)
+    hcb.id_print(ex)
+    hcb.id_print(ev)
     ex_ev_mean = get_mean(jnp.append(ex, ev, axis=0), weights )
 
     pos_factor = 1.0
