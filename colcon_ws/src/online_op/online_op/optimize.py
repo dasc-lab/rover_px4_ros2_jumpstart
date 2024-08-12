@@ -213,7 +213,8 @@ class optimizer(Node):
         def body(i, inputs):
             params_policy = inputs
             params_policy_grad = get_future_reward_grad( init_state, params_policy, [self.gp0, self.gp1, self.gp2], [self.sigma0, self.sigma1, self.sigma2], gp_train_x, gp_train_y, deltaT,  [ref_pos, ref_vel,ref_acc])
-            print_debug(params_policy_grad, "parameters policy gradient is: ")
+            # print_debug(params_policy_grad, "parameters policy gradient is: ")
+            hcb.id_print(params_policy_grad)
             params_policy_grad = jnp.clip( params_policy_grad, -self.grad_clip, self.grad_clip )
             params_policy = params_policy - self.custom_lr_rate * params_policy_grad
             return params_policy
