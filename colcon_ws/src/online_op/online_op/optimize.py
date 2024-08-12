@@ -26,6 +26,12 @@ from foresee_msgs.msg import TrajectoryInfo
 from pymavlink import mavutil
 from .optimize_helper import *
 from jax import grad, jit
+from jax.experimental import host_callback as hcb
+def print_debug(value, msg):
+    def _print(x):
+        print(f"{msg}: {x}")
+    return hcb.call(_print, value, result_shape=value)
+
 # os.environ['JAX_TRACEBACK_FILTERING'] = 'off'
 # import pymavparam as pm
 
