@@ -247,6 +247,7 @@ class optimizer(Node):
     def create_ParameterReq_msg(self, param_name_,value_):
         msg = ParameterReq()
         param_name_char_array = ['']*16
+        print(param_name_)
         for i in range(len(param_name_)):
             param_name_char_array[i] = param_name_[i]
         msg.param_name = param_name_char_array
