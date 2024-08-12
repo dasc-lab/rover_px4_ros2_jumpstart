@@ -248,8 +248,13 @@ class optimizer(Node):
         msg = ParameterReq()
         param_name_char_array = ['']*16
         print("lenght of param_name_ is: ",len(param_name_))
-        for i in range(len(param_name_)):
-            param_name_char_array[i] = ord(param_name_[i])
+        for i in range(len(param_name_char_array)):
+            if i < len(param_name_):
+                param_name_char_array[i] = ord(param_name_[i])
+            else:
+                param_name_char_array[i] = ord('\0')
+        print(type(param_name_char_array[0]))
+        print("lenght of param_name_char_array is: ",len(param_name_char_array))
         # param_name_ = param_name_.ljust(16, '\0')
         msg.param_name = param_name_char_array
         msg.set = True
