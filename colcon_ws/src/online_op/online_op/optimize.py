@@ -100,7 +100,7 @@ class optimizer(Node):
         # self.op_dt = 0.05
         self.custom_lr_rate = 0.02
         self.grad_clip = 20.0
-        self.iter_adam_custom = 100
+        self.iter_adam_custom = 200
         
         ###### set up mavlink ######
         # self.mavlink_ = mavutil.mavlink_connection('udp:127.0.0.1:14550')
@@ -127,7 +127,7 @@ class optimizer(Node):
         if self.trajectory_type_valid is False:
             self.trajectory_type = msg.type
             self.trajectory_type_int = 0 if self.trajectory_type == 'circle' else 1
-            print(self.trajectory_type, self.trajectory_type == 'circle')
+            # print(self.trajectory_type, self.trajectory_type == 'circle')
             self.radius = msg.radius
             self.angular_vel = msg.angular_vel
             self.center_x = msg.center_x
