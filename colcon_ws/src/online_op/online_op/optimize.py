@@ -246,11 +246,12 @@ class optimizer(Node):
         return ref_pos,ref_vel,ref_acc
     def create_ParameterReq_msg(self, param_name_,value_):
         msg = ParameterReq()
-        param_name_char_array = ['']*16
-        print(param_name_)
-        for i in range(len(param_name_)):
-            param_name_char_array[i] = param_name_[i]
-        msg.param_name = param_name_char_array
+        # param_name_char_array = ['']*16
+        # print(len(param_name_))
+        # for i in range(len(param_name_)):
+        #     param_name_char_array[i] = param_name_[i]
+        param_name_ = param_name_.ljust(16, '\0')
+        msg.param_name = param_name_
         msg.set = True
         msg.value = value_
     def publish_gains(self):
