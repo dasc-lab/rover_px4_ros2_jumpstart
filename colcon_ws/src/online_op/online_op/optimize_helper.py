@@ -28,8 +28,8 @@ def reward_func(states, weights, pos_ref, vel_ref):
     print("pos error: ", ex)
     ev = states[3:6] - vel_ref
     print("vel error: ", ev)
-    hcb.id_print(ex)
-    hcb.id_print(ev)
+#     hcb.id_print(ex)
+#     hcb.id_print(ev)
     ex_ev_mean = get_mean(jnp.append(ex, ev, axis=0), weights )
 
     pos_factor = 1.0
@@ -61,7 +61,7 @@ def get_future_reward(state, params_policy, gps, sigma_inv, gp_train_x, gp_train
         ###### fixed policy ######
         
         control_inputs, pos_ref, vel_ref = policy( states, params_policy, [ref_pos,ref_vel,ref_acc])         # mean_position = get_mean( states, weights )
-        
+        hcb.idprint(control_inputs)
         next_states_mean, next_states_cov = get_next_states_with_gp_sigma_inv( states, control_inputs, op_dt, [gp0, gp1, gp2], [sigma0, sigma1, sigma2], gp_train_x, gp_train_y )
         next_states_expanded, next_weights_expanded = sigma_point_expand_with_mean_cov( next_states_mean, next_states_cov, weights)
         next_states, next_weights = sigma_point_compress( next_states_expanded, next_weights_expanded )
