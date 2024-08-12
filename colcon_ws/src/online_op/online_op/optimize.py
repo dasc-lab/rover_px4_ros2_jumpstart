@@ -247,7 +247,7 @@ class optimizer(Node):
     def create_ParameterReq_msg(self, param_name_,value_):
         msg = ParameterReq()
         param_name_char_array = ['']*16
-        print("lenght of param_name_ is: ",len(param_name_))
+        # print("lenght of param_name_ is: ",len(param_name_))
         for i in range(len(param_name_char_array)):
             if i < len(param_name_):
                 param_name_char_array[i] = ord(param_name_[i])
@@ -258,7 +258,9 @@ class optimizer(Node):
         # param_name_ = param_name_.ljust(16, '\0')
         msg.param_name = param_name_char_array
         msg.set = True
-        msg.value = value_
+        print("value_ is: ", value_)
+        print("Type of value is: ", type(value_))
+        msg.value = float(value_)
     def publish_gains(self):
         message_kx = self.create_ParameterReq_msg('QUAD_KX', self.kx)
         self.publisher_.publish(message_kx)
