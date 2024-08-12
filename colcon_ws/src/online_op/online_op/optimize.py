@@ -98,9 +98,9 @@ class optimizer(Node):
         # w2 = 0.1
         
         # self.op_dt = 0.05
-        self.custom_lr_rate = 0.5
-        self.grad_clip = 1.0
-        self.iter_adam_custom = 200
+        self.custom_lr_rate = 0.02
+        self.grad_clip = 5.0
+        self.iter_adam_custom = 100
         
         ###### set up mavlink ######
         # self.mavlink_ = mavutil.mavlink_connection('udp:127.0.0.1:14550')
@@ -172,7 +172,7 @@ class optimizer(Node):
         x = jnp.load(trainset_file_path+'training_input.npy')
         y = jnp.column_stack((train_x, train_y, train_z))
         
-        trainset_slice = 10
+        trainset_slice = 50
         x = x[::trainset_slice]
         y = y[::trainset_slice].T
         self.training_state = x
