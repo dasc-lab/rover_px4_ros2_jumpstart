@@ -148,7 +148,8 @@ class optimizer(Node):
                 deltaT = (self.get_clock().now().nanoseconds-self.start_time)/10**9
                 # ref_coord = self.find_ref_coord(deltaT)
                 self.kx, self.kv = self.optimize(deltaT)
-                self.publish_optimal_gains()
+                self.get_logger().info(f'QUAD_KX is:  {self.kx} and QUAD_KV is: {self.kv}')
+                # self.publish_optimal_gains()
 
 
 
