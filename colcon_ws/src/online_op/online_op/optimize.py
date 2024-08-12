@@ -16,7 +16,7 @@ import gpjax as gpx
 from rclpy.node import Node
 from std_msgs.msg import *
 import numpy as np
-from px4_msgs.msg import TrajectorySetpoint, VehicleLocalPosition
+from px4_msgs.msg import TrajectorySetpoint, VehicleLocalPosition, ParameterReq
 from rclpy.clock import Clock
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from .test_jax_utils import *
@@ -113,8 +113,9 @@ class optimizer(Node):
         # self.mavlink_ = mavutil.mavlink_connection('/dev/ttyUSB0', baud=115200)
         # self.mavlink_.wait_heartbeat()
         # self.get_logger().info("Mavlink Connected")
+        ###### set up publisher for pxhawk ######
+        self.publisher_ = self.create_publisher(ParameterReq,'/px4_1/fmu/in/parameter_req',10)
 
-        
         ################## set up Subscription ##################
         self.drone_coordinates = self.create_subscription(
 		    VehicleLocalPosition,
@@ -155,7 +156,7 @@ class optimizer(Node):
                 # ref_coord = self.find_ref_coord(deltaT)
                 self.kx, self.kv = self.optimize(deltaT)
                 self.get_logger().info(f'QUAD_KX is:  {self.kx} and QUAD_KV is: {self.kv}')
-                # self.publish_optimal_gains()
+                self.publish_gains()
 
 
 
@@ -243,25 +244,32 @@ class optimizer(Node):
             pos_vel_acc = figure8_pos_vel_acc
         ref_pos,ref_vel,ref_acc = pos_vel_acc(deltaT, self.radius, self.angular_vel, self.center_x, self.center_y)
         return ref_pos,ref_vel,ref_acc
+    def create_ParameterReq_msg(self, param_name_,value_):
+        msg = ParameterReq()
+        msg.param_name = param_name_
+        msg.set = True
+        msg.value = value_
+    def publish_gains(self):
+        message_kx = self.create_ParameterReq_msg('QUAD_KX', self.kx)
+        self.publisher_.publish(message_kx)
+        message_kv = self.create_ParameterReq_msg('QUAD_KV', self.kv)
+        self.publisher_.publish(message_kv)
+    # def publish_optimal_gains(self):
+    #     print(self.kx, self.kv)
+    #     self.get_logger().info(f'Sending Gains: QUAD_KX = {self.kx}, QUAD_KV = {self.kv}')
+    #     self.mavlink_.mav.param_set_send(
+    #         self.mavlink_.target_system, self.mavlink_.target_component,
+    #         b'QUAD_KX',
+    #         self.kx,
+    #         mavutil.mavlink.MAV_PARAM_TYPE_REAL32
+    #     )
 
-
-
-    def publish_optimal_gains(self):
-        print(self.kx, self.kv)
-        self.get_logger().info(f'Sending Gains: QUAD_KX = {self.kx}, QUAD_KV = {self.kv}')
-        self.mavlink_.mav.param_set_send(
-            self.mavlink_.target_system, self.mavlink_.target_component,
-            b'QUAD_KX',
-            self.kx,
-            mavutil.mavlink.MAV_PARAM_TYPE_REAL32
-        )
-
-        self.mavlink_.mav.param_set_send(
-            self.mavlink_.target_system, self.mavlink_.target_component,
-            b'QUAD_KV',
-            self.kv,
-            mavutil.mavlink.MAV_PARAM_TYPE_REAL32
-        )
+    #     self.mavlink_.mav.param_set_send(
+    #         self.mavlink_.target_system, self.mavlink_.target_component,
+    #         b'QUAD_KV',
+    #         self.kv,
+    #         mavutil.mavlink.MAV_PARAM_TYPE_REAL32
+    #     )
 
 def main(args=None):
     rclpy.init(args=args)

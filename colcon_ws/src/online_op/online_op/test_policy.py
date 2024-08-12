@@ -1,6 +1,7 @@
 import jax.numpy as jnp
 from jax import jit, vmap, lax
 import jax
+from jax.experimental import host_callback as hcb
 def state_ref(t):
     dataset_index = 1
     pos, vel, acc = figure8_pos_vel_acc( t, figure8_radius[dataset_index], figure8_angular_vel[dataset_index], figure8_origin_x[dataset_index], figure8_origin_y[dataset_index] )
@@ -27,6 +28,7 @@ def policy( states, policy_params,reference):
     vel_ref = jnp.reshape(vel_ref, (-1,1))
     acc_ref = jnp.reshape(acc_ref, (-1,1))
     ex = states[0:3] - pos_ref
+    hcb.id_print(ex)
     # ex = lax.cond( jnp.linalg.norm(ex)>2, lambda z: 2.0 * z / jnp.linalg.norm(z), lambda z: z, ex )
     ev = states[3:6] - vel_ref
     # ev = lax.cond( jnp.linalg.norm(ev)>5, lambda z: 5.0 * z / jnp.linalg.norm(z), lambda z: z, ev )

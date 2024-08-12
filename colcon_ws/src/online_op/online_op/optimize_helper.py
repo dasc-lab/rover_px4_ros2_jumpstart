@@ -26,9 +26,9 @@ def reward_func(states, weights, pos_ref, vel_ref):
     returns: calculated reward
     '''
     ex = states[0:3] - pos_ref
-    jax.debug.print("pos error: ", ex)
+    
     ev = states[3:6] - vel_ref
-    jax.debug.print("vel error: ", ev)
+    
 #     hcb.id_print(ex)
 #     hcb.id_print(ev)
     ex_ev_mean = get_mean(jnp.append(ex, ev, axis=0), weights )
