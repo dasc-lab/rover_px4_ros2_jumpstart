@@ -28,8 +28,8 @@ def policy( states, policy_params,reference):
     vel_ref = jnp.reshape(vel_ref, (-1,1))
     acc_ref = jnp.reshape(acc_ref, (-1,1))
     ex = states[0:3] - pos_ref
-    print("policy pos error is: ", ex[0].item(), ex[1].item(), ex[2].item())
-    # hcb.id_print(ex)
+    # print("policy pos error is: ", ex[0].item(), ex[1].item(), ex[2].item())
+    hcb.id_print(ex)
     # ex = lax.cond( jnp.linalg.norm(ex)>2, lambda z: 2.0 * z / jnp.linalg.norm(z), lambda z: z, ex )
     ev = states[3:6] - vel_ref
     # ev = lax.cond( jnp.linalg.norm(ev)>5, lambda z: 5.0 * z / jnp.linalg.norm(z), lambda z: z, ev )
