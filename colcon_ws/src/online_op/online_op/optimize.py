@@ -263,6 +263,7 @@ class optimizer(Node):
         msg.value = float(value_)
     def publish_gains(self):
         message_kx = self.create_ParameterReq_msg('QUAD_KX', self.kx)
+        print("message kx type is",type(message_kx))
         self.publisher_.publish(message_kx)
         message_kv = self.create_ParameterReq_msg('QUAD_KV', self.kv)
         self.publisher_.publish(message_kv)
