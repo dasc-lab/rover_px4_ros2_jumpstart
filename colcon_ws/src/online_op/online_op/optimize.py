@@ -244,6 +244,7 @@ class optimizer(Node):
             pos_vel_acc = figure8_pos_vel_acc
         ref_pos,ref_vel,ref_acc = pos_vel_acc(deltaT, self.radius, self.angular_vel, self.center_x, self.center_y)
         return ref_pos,ref_vel,ref_acc
+    
     def create_ParameterReq_msg(self, param_name_,value_):
         msg = ParameterReq()
         param_name_char_array = ['']*16
@@ -253,18 +254,18 @@ class optimizer(Node):
                 param_name_char_array[i] = ord(param_name_[i])
             else:
                 param_name_char_array[i] = ord('\0')
-        print(type(param_name_char_array[0]))
-        print("lenght of param_name_char_array is: ",len(param_name_char_array))
+        # print(type(param_name_char_array[0]))
+        # print("length of param_name_char_array is: ",len(param_name_char_array))
         # param_name_ = param_name_.ljust(16, '\0')
         msg.param_name = param_name_char_array
         msg.set = True
-        print("value_ is: ", value_)
-        print("Type of value is: ", type(value_.item()))
+        # print("value_ is: ", value_)
+        # print("Type of value is: ", type(value_.item()))
         msg.value = float(value_)
         return msg
     def publish_gains(self):
         message_kx = self.create_ParameterReq_msg('QUAD_KX', self.kx)
-        print("message kx type is",type(message_kx))
+        
         self.publisher_.publish(message_kx)
         message_kv = self.create_ParameterReq_msg('QUAD_KV', self.kv)
         self.publisher_.publish(message_kv)

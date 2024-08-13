@@ -28,7 +28,7 @@ def reward_func(states, weights, pos_ref, vel_ref):
     ex = states[0:3] - pos_ref
     
     ev = states[3:6] - vel_ref
-    
+    print("pos error: ", ex.item())
 #     hcb.id_print(ex)
 #     hcb.id_print(ev)
     ex_ev_mean = get_mean(jnp.append(ex, ev, axis=0), weights )
@@ -36,7 +36,7 @@ def reward_func(states, weights, pos_ref, vel_ref):
     pos_factor = 1.0
     vel_factor = 0.1
     reward = pos_factor * jnp.sum(ex_ev_mean[0:3] ** 2) + vel_factor * jnp.sum(ex_ev_mean[3:6] ** 2)
-    print("reward: ", reward)
+    print("reward: ", reward.item())
     return reward
 @jit
 def get_future_reward(state, params_policy, gps, sigma_inv, gp_train_x, gp_train_y, deltaT, reference_pos_vel_acc):
