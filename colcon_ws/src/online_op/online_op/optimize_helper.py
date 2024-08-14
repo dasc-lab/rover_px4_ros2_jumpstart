@@ -39,7 +39,7 @@ def reward_func(states, weights, pos_ref, vel_ref):
 #     print("reward: ", reward.item())
     return reward
 @jit
-def get_future_reward(state, params_policy, gps, sigma_inv, gp_train_x, gp_train_y, deltaT, reference_pos_vel_acc):
+def get_future_reward(state, params_policy, gps, sigma_inv, gp_train_x, gp_train_y, deltaT, trajectory_type, parameters):
     print("Calculating Reward")
     print("state vector shape is: ", state.shape)
     states,weights = initialize_sigma_points( state )
@@ -58,7 +58,7 @@ def get_future_reward(state, params_policy, gps, sigma_inv, gp_train_x, gp_train
         t = h * op_dt+ deltaT
         reward, states, weights = inputs
         # ref_pos, ref_vel, ref_acc = find_ref_pos_vel_acc(trajectory_type,t, trajectory_parameters)
-        ref_pos,ref_vel,ref_acc = reference_pos_vel_acc
+        ref_pos,ref_vel,ref_acc = find_ref_pos_vel_acc(trajectory_type,t,parameters)
         ###### fixed policy ######
         
         control_inputs, pos_ref, vel_ref = policy( states, params_policy, [ref_pos,ref_vel,ref_acc])         # mean_position = get_mean( states, weights )
@@ -77,7 +77,7 @@ get_future_reward_grad = jit(grad(get_future_reward, argnums=1))
 def find_ref_pos_vel_acc(trajectory_type, deltaT, parameters):
         radius, angular_vel, center_x, center_y = parameters
         print(f"radius: {radius}, ")
-        if trajectory_type == 'circle': #'circle'
+        if trajectory_type == 0: #'circle'
             pos_vel_acc = circle_pos_vel_acc
         else:
             pos_vel_acc = figure8_pos_vel_acc
