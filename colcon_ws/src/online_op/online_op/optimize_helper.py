@@ -76,8 +76,10 @@ get_future_reward_grad = jit(grad(get_future_reward, argnums=1))
 
 def find_ref_pos_vel_acc(trajectory_type, deltaT, parameters):
         radius, angular_vel, center_x, center_y = parameters
-        print(f"radius: {radius}, ")
-        if trajectory_type == 0: #'circle'
+        # print(f"radius: {radius}, ")
+        print(type(trajectory_type))
+        print(trajectory_type.item())
+        if trajectory_type.item() == 0: #'circle'
             pos_vel_acc = circle_pos_vel_acc
         else:
             pos_vel_acc = figure8_pos_vel_acc
