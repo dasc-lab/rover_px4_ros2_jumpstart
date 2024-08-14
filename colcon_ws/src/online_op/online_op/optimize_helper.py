@@ -58,7 +58,11 @@ def get_future_reward(state, params_policy, gps, sigma_inv, gp_train_x, gp_train
         t = h * op_dt+ deltaT
         reward, states, weights = inputs
         # ref_pos, ref_vel, ref_acc = find_ref_pos_vel_acc(trajectory_type,t, trajectory_parameters)
-        ref_pos,ref_vel,ref_acc = find_ref_pos_vel_acc(trajectory_type,t,parameters)
+        if trajectory_type == 0:
+            ref_pos,ref_vel,ref_acc = find_ref_pos_vel_acc(0,t,parameters)
+        else:
+            ref_pos,ref_vel,ref_acc = find_ref_pos_vel_acc(1,t,parameters)
+             
         ###### fixed policy ######
         
         control_inputs, pos_ref, vel_ref = policy( states, params_policy, [ref_pos,ref_vel,ref_acc])         # mean_position = get_mean( states, weights )
