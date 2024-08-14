@@ -180,7 +180,7 @@ class optimizer(Node):
         x = jnp.load(trainset_file_path+'training_input.npy')
         y = jnp.column_stack((train_x, train_y, train_z))
         
-        trainset_slice = 100
+        trainset_slice = 20
         x = x[::trainset_slice]
         y = y[::trainset_slice].T
         self.training_state = x
