@@ -76,14 +76,29 @@ def get_future_reward(state, params_policy, gps, sigma_inv, gp_train_x, gp_train
     return reward
 get_future_reward_grad = jit(grad(get_future_reward, argnums=1))
 
+# def find_ref_pos_vel_acc(trajectory_type, deltaT, parameters):
+#         radius, angular_vel, center_x, center_y = parameters
+#         # print(f"radius: {radius}, ")
+#         print(type(trajectory_type))
+#         # print(int(trajectory_type))
+#         if trajectory_type == 0: #'circle'
+#             pos_vel_acc = circle_pos_vel_acc
+#         else:
+#             pos_vel_acc = figure8_pos_vel_acc
+#         ref_pos,ref_vel,ref_acc = pos_vel_acc(deltaT, radius, angular_vel, center_x, center_y)
+#         return ref_pos,ref_vel,ref_acc
 def find_ref_pos_vel_acc(trajectory_type, deltaT, parameters):
-        radius, angular_vel, center_x, center_y = parameters
-        # print(f"radius: {radius}, ")
-        print(type(trajectory_type))
-        # print(int(trajectory_type))
-        if trajectory_type == 0: #'circle'
-            pos_vel_acc = circle_pos_vel_acc
-        else:
-            pos_vel_acc = figure8_pos_vel_acc
-        ref_pos,ref_vel,ref_acc = pos_vel_acc(deltaT, radius, angular_vel, center_x, center_y)
-        return ref_pos,ref_vel,ref_acc
+    radius, angular_vel, center_x, center_y = parameters
+
+    def circle_case(_):
+        return circle_pos_vel_acc(deltaT, radius, angular_vel, center_x, center_y)
+
+    def figure8_case(_):
+        return figure8_pos_vel_acc(deltaT, radius, angular_vel, center_x, center_y)
+
+    ref_pos, ref_vel, ref_acc = lax.cond(trajectory_type == 0,
+                                         circle_case,
+                                         figure8_case,
+                                         operand=None)
+
+    return ref_pos, ref_vel, ref_acc
