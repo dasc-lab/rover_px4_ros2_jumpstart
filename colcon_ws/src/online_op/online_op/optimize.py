@@ -185,7 +185,7 @@ class optimizer(Node):
         y = y[::trainset_slice].T
         self.training_state = x
         self.training_disturbance = y
-        
+        print("train input shape: ", x.shape)
         D0 = gpx.Dataset(X=x, y=y[0].reshape(-1,1))
         D1 = gpx.Dataset(X=x, y=y[1].reshape(-1,1))
         D2 = gpx.Dataset(X=x, y=y[2].reshape(-1,1))
