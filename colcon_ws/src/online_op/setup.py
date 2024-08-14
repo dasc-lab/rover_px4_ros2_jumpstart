@@ -30,7 +30,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'optimizer=online_op.optimize:main'
+            'optimizer=online_op.optimize:main',
+            'optimizer_sparse_gp=online_op.optimize_sparse_gp:main'
         ],
     },
 )

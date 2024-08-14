@@ -25,7 +25,7 @@ from .test_policy import *
 from foresee_msgs.msg import TrajectoryInfo
 from pymavlink import mavutil
 from .optimize_helper import *
-from jax import grad, jit
+from jax import grad, jit, lax, value_and_grad, jacrev, jacfwd
 from jax.experimental import host_callback as hcb
 def print_debug(value, msg):
     def _print(x):
@@ -105,7 +105,7 @@ class optimizer(Node):
         
         # self.op_dt = 0.05
         self.custom_lr_rate = 0.1
-        self.grad_clip = 1.0
+        self.grad_clip = 20.0
         self.iter_adam_custom = 200
         
         ###### set up mavlink ######
@@ -180,7 +180,7 @@ class optimizer(Node):
         x = jnp.load(trainset_file_path+'training_input.npy')
         y = jnp.column_stack((train_x, train_y, train_z))
         
-        trainset_slice = 100
+        trainset_slice = 50
         x = x[::trainset_slice]
         y = y[::trainset_slice].T
         self.training_state = x
@@ -202,7 +202,7 @@ class optimizer(Node):
         params_policy = jnp.array([self.kx, self.kv])
         init_state = jnp.array(self.current_state)
         ref_pos,ref_vel,ref_acc = self.find_ref_pos_vel_acc(deltaT)
-
+        
     def optimize(self,deltaT):
         
         print("Optimizing")
