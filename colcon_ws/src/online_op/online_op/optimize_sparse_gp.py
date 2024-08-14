@@ -165,9 +165,9 @@ class optimizer(Node):
         self.get_logger().info('Initializing Gaussian Process Models')
         ###### load gaussian process models ######
         gp_file_path = home_path_op+'gp_models/'
-        gp_file_x = gp_file_path + 'gp_model_x_norm5_clipped.pkl'
-        gp_file_y = gp_file_path + 'gp_model_y_norm5_clipped.pkl'
-        gp_file_z = gp_file_path + 'gp_model_z_norm5_clipped.pkl'
+        gp_file_x = gp_file_path + 'sparsegp_model_x_norm5_clipped.pkl'
+        gp_file_y = gp_file_path + 'sparsegp_model_y_norm5_clipped.pkl'
+        gp_file_z = gp_file_path + 'sparsegp_model_z_norm5_clipped.pkl'
         self.gp0 = initialize_gp_prediction(gp_file_x)
         self.gp1 = initialize_gp_prediction(gp_file_y)
         self.gp2 = initialize_gp_prediction(gp_file_z)
@@ -190,9 +190,9 @@ class optimizer(Node):
         D1 = gpx.Dataset(X=x, y=y[1].reshape(-1,1))
         D2 = gpx.Dataset(X=x, y=y[2].reshape(-1,1))
         ###### compute the inverses ######
-        self.sigma0 = self.gp0.compute_sigma_inv(train_data=D0)
-        self.sigma1 = self.gp1.compute_sigma_inv(train_data=D1)
-        self.sigma2 = self.gp2.compute_sigma_inv(train_data=D2)
+        self.sigma0 = self.gp0.posterior.compute_sigma_inv(train_data=D0)
+        self.sigma1 = self.gp1.posterior.compute_sigma_inv(train_data=D1)
+        self.sigma2 = self.gp2.posterior.compute_sigma_inv(train_data=D2)
 
     def optimize_scipy(self, deltaT):
         print("Optimizing with Scipy")

@@ -20,7 +20,7 @@ from px4_msgs.msg import TrajectorySetpoint, VehicleLocalPosition, ParameterReq
 from rclpy.clock import Clock
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from .test_jax_utils import *
-from .test_gp_utils import *
+from .test_gp_utils_sparse import *
 from .test_policy import *
 from foresee_msgs.msg import TrajectoryInfo
 from pymavlink import mavutil
@@ -156,6 +156,10 @@ class optimizer(Node):
                 # ref_coord = self.find_ref_coord(deltaT)
                 self.kx, self.kv = self.optimize(deltaT)
                 self.get_logger().info(f'QUAD_KX is:  {self.kx} and QUAD_KV is: {self.kv}')
+                self.kx = min(20,self.kx)
+                self.kx = max(7, self.kx)
+                self.kv = min(self.kx, self.kv)
+                self.kv = max(4, self.kv)
                 self.publish_gains()
 
 
@@ -165,9 +169,9 @@ class optimizer(Node):
         self.get_logger().info('Initializing Gaussian Process Models')
         ###### load gaussian process models ######
         gp_file_path = home_path_op+'gp_models/'
-        gp_file_x = gp_file_path + 'gp_model_x_norm5_clipped.pkl'
-        gp_file_y = gp_file_path + 'gp_model_y_norm5_clipped.pkl'
-        gp_file_z = gp_file_path + 'gp_model_z_norm5_clipped.pkl'
+        gp_file_x = gp_file_path + 'sparsegp_model_x_norm5_clipped.pkl'
+        gp_file_y = gp_file_path + 'sparsegp_model_y_norm5_clipped.pkl'
+        gp_file_z = gp_file_path + 'sparsegp_model_z_norm5_clipped.pkl'
         self.gp0 = initialize_gp_prediction(gp_file_x)
         self.gp1 = initialize_gp_prediction(gp_file_y)
         self.gp2 = initialize_gp_prediction(gp_file_z)
