@@ -20,7 +20,7 @@ from px4_msgs.msg import TrajectorySetpoint, VehicleLocalPosition, ParameterReq
 from rclpy.clock import Clock
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from .test_jax_utils import *
-from .test_gp_utils_sparse import *
+from .test_gp_utils import *
 from .test_policy import *
 from foresee_msgs.msg import TrajectoryInfo
 from pymavlink import mavutil
