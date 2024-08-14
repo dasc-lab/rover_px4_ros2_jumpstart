@@ -78,8 +78,8 @@ def find_ref_pos_vel_acc(trajectory_type, deltaT, parameters):
         radius, angular_vel, center_x, center_y = parameters
         # print(f"radius: {radius}, ")
         print(type(trajectory_type))
-        print((trajectory_type))
-        if (trajectory_type) == 0: #'circle'
+        print(int(trajectory_type))
+        if int(trajectory_type) == 0: #'circle'
             pos_vel_acc = circle_pos_vel_acc
         else:
             pos_vel_acc = figure8_pos_vel_acc
