@@ -59,7 +59,7 @@ def get_future_reward(state, params_policy, gps, sigma_inv, gp_train_x, gp_train
         reward, states, weights,trajectory_type = inputs
         # ref_pos, ref_vel, ref_acc = find_ref_pos_vel_acc(trajectory_type,t, trajectory_parameters)
         
-        ref_pos,ref_vel,ref_acc = find_ref_pos_vel_acc(trajectory_type,t,parameters)
+        ref_pos,ref_vel,ref_acc = find_ref_pos_vel_acc(trajectory_type[0],t,parameters)
              
         ###### fixed policy ######
         
