@@ -56,12 +56,10 @@ def get_future_reward(state, params_policy, gps, sigma_inv, gp_train_x, gp_train
         Performs UT-EC with 6 states
         '''
         t = h * op_dt+ deltaT
-        reward, states, weights = inputs
+        reward, states, weights,trajectory_type = inputs
         # ref_pos, ref_vel, ref_acc = find_ref_pos_vel_acc(trajectory_type,t, trajectory_parameters)
-        if trajectory_type == 0:
-            ref_pos,ref_vel,ref_acc = find_ref_pos_vel_acc(0,t,parameters)
-        else:
-            ref_pos,ref_vel,ref_acc = find_ref_pos_vel_acc(1,t,parameters)
+        
+        ref_pos,ref_vel,ref_acc = find_ref_pos_vel_acc(trajectory_type,t,parameters)
              
         ###### fixed policy ######
         
@@ -74,7 +72,7 @@ def get_future_reward(state, params_policy, gps, sigma_inv, gp_train_x, gp_train
         weights = next_weights
         reward = reward + reward_func( states, weights, pos_ref, vel_ref ) # reward is loss
         return reward, states, weights
-    reward =  lax.fori_loop( 0, horizon, body, (reward, states, weights) )[0]
+    reward =  lax.fori_loop( 0, horizon, body, (reward, states, weights, trajectory_type) )[0]
     return reward
 get_future_reward_grad = jit(grad(get_future_reward, argnums=1))
 
