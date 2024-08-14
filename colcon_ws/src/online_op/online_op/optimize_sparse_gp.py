@@ -165,9 +165,9 @@ class optimizer(Node):
         self.get_logger().info('Initializing Gaussian Process Models')
         ###### load gaussian process models ######
         gp_file_path = home_path_op+'gp_models/'
-        gp_file_x = gp_file_path + 'sparsegp_model_x_norm5_clipped.pkl'
-        gp_file_y = gp_file_path + 'sparsegp_model_y_norm5_clipped.pkl'
-        gp_file_z = gp_file_path + 'sparsegp_model_z_norm5_clipped.pkl'
+        gp_file_x = gp_file_path + 'sparsegp_model_x_norm5_clipped_moredata.pkl'
+        gp_file_y = gp_file_path + 'sparsegp_model_y_norm5_clipped_moredata.pkl'
+        gp_file_z = gp_file_path + 'sparsegp_model_z_norm5_clipped_moredata.pkl'
         self.gp0 = initialize_gp_prediction(gp_file_x)
         self.gp1 = initialize_gp_prediction(gp_file_y)
         self.gp2 = initialize_gp_prediction(gp_file_z)
