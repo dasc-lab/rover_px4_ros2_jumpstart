@@ -43,6 +43,7 @@ class optimizer(Node):
     get_future_reward_grad = None
     grad_clip = 20
     custom_lr_rate = 0.1
+    iter_adam_custom = 1
     def __init__(self):
         super().__init__('optimizer')
 
@@ -113,7 +114,7 @@ class optimizer(Node):
         # self.op_dt = 0.05
         optimizer.custom_lr_rate = 0.1
         optimizer.grad_clip = 20.0
-        self.iter_adam_custom = 200
+        optimizer.iter_adam_custom = 1 #200
         self.optimizer_init = False
         
         ###### set up mavlink ######
@@ -141,16 +142,21 @@ class optimizer(Node):
         
         self.optimizer_init_sub = self.create_subscription( Bool, '/optimizer_init', self.optimizer_init_callback, 10 )
 
-        # Initialize reward function and its gradient
-        optimizer.get_future_reward = self.setup_reward_func()
-        optimizer.get_future_reward_grad = jit(grad(optimizer   .get_future_reward, argnums=(1)))
+        self.timer_period = 0.05
+        self.timer_kx = self.create_timer(0.05, self.kx_callback)
+        self.timer_ky = self.create_timer(1.0, self.kv_callback)
+        self.timer_optimize = self.create_timer(0.05, self.optimize_callback)
 
-        # Run once to JIT
-        params_policy = jnp.array([self.kx, self.kv])
-        init_state = jnp.array([0.0,0,0,0,0,0]).reshape(-1,1)            
-        optimizer.get_future_reward(init_state, params_policy, jnp.array([0]) )
-        optimizer.get_future_reward_grad( init_state, params_policy, jnp.array([0]) )
-        self.get_logger().info("Gaussian Process Initialized")
+        # # Initialize reward function and its gradient
+        # optimizer.get_future_reward = self.setup_reward_func()
+        # optimizer.get_future_reward_grad = jit(grad(optimizer   .get_future_reward, argnums=(1)))
+
+        # # Run once to JIT
+        # params_policy = jnp.array([self.kx, self.kv])
+        # init_state = jnp.array([0.0,0,0,0,0,0]).reshape(-1,1)            
+        # optimizer.get_future_reward(init_state, params_policy, jnp.array([0]) )
+        # optimizer.get_future_reward_grad( init_state, params_policy, jnp.array([0]) )
+        # self.get_logger().info("Gaussian Process Initialized")
 
     def optimizer_init_callback(self, msg):
         self.optimizer_init = msg.data
@@ -164,15 +170,16 @@ class optimizer(Node):
             self.angular_vel = msg.angular_vel
             self.center_x = msg.center_x
             self.center_y = msg.center_y
+            self.height = msg.height
             self.start_time = msg.start_time
 
             # Initialize reward function and its gradient
             optimizer.get_future_reward = self.setup_reward_func()
-            optimizer.get_future_reward_grad = jit(grad(self.get_future_reward, argnums=(1)))
+            optimizer.get_future_reward_grad = jit(grad(optimizer   .get_future_reward, argnums=(1)))
 
             # Run once to JIT
             params_policy = jnp.array([self.kx, self.kv])
-            init_state = jnp.array([0,0,0,0,0,0])            
+            init_state = jnp.array([0.0,0,0,0,0,0]).reshape(-1,1)            
             optimizer.get_future_reward(init_state, params_policy, jnp.array([0]) )
             optimizer.get_future_reward_grad( init_state, params_policy, jnp.array([0]) )
             self.get_logger().info("Gaussian Process Initialized")
@@ -189,18 +196,17 @@ class optimizer(Node):
             self.current_vel = [msg.vx,msg.vy,msg.vz]
             self.current_state = jnp.array(self.current_pos + self.current_vel)
             # print(self.current_state)
+            # self.get_logger().info(f'state is:  {self.current_state}')
 
-            # return
-
-            if not self.optimizer_init:
-                return
+            # if not self.optimizer_init:
+            #     return
             
-            if self.trajectory_type_valid is True:
-                deltaT = jnp.array([(self.get_clock().now().nanoseconds-self.start_time)/10**9])
-                # ref_coord = self.find_ref_coord(deltaT)
-                self.kx, self.kv = self.optimize(deltaT)
-                self.get_logger().info(f'QUAD_KX is:  {self.kx} and QUAD_KV is: {self.kv}')
-                self.publish_gains()
+            # if self.trajectory_type_valid is True:
+            #     deltaT = jnp.array([(self.get_clock().now().nanoseconds-self.start_time)/10**9])
+            #     # ref_coord = self.find_ref_coord(deltaT)
+            #     self.kx, self.kv = self.optimize(deltaT)
+            #     # self.get_logger().info(f'QUAD_KX is:  {self.kx} and QUAD_KV is: {self.kv}')
+            #     # self.publish_gains()
 
     def initialize_gp(self):
         self.get_logger().info('Initializing Gaussian Process Models')
@@ -300,35 +306,52 @@ class optimizer(Node):
         params_policy = jnp.array([self.kx, self.kv])
         init_state = jnp.array(self.current_state)
         ref_pos,ref_vel,ref_acc = self.find_ref_pos_vel_acc(deltaT)
-        
-    def optimize(self,deltaT):
-        
-        print("Optimizing")
-        # gp_train_x = self.training_state        
-        # gp_train_y = self.training_disturbance
-        params_policy = jnp.array([self.kx, self.kv])
-        init_state = jnp.array(self.current_state)
-        # print("init state: ", init_state)
-        # self.get_logger().info(f"The State Vector is: {init_state}")
-        # print("initial state type is: ",type(init_state))
-        # print("initial state shape is ", init_state.shape)
-        # print("policy params type is: ",type(params_policy))
-        # print("gp train type is: ",type(gp_train_x), type(gp_train_y))
-        # print("deltaT type is: ",type(deltaT))
-        # ref_pos,ref_vel,ref_acc = self.find_ref_pos_vel_acc(deltaT)
 
-        @jit
-        def body(i, inputs):
-            params_policy = inputs
-            params_policy_grad = optimizer.get_future_reward_grad( init_state, params_policy, deltaT )
-            params_policy_grad = jnp.clip( params_policy_grad, -optimizer.grad_clip, optimizer.grad_clip )
-            params_policy = params_policy - optimizer.custom_lr_rate * params_policy_grad
-            return params_policy        
-        # print(type(self.kx), type(self.kv))
-        params_policy = lax.fori_loop(0, self.iter_adam_custom, body, params_policy)
-        op_kx = params_policy[0]
-        op_kv = params_policy[1]
-        return op_kx, op_kv
+
+    def optimize_callback(self):
+        if not self.optimizer_init:
+            return
+        if self.trajectory_type_valid is True:
+            self.get_logger().info(f'optimizing')
+            deltaT = jnp.array([(self.get_clock().now().nanoseconds-self.start_time)/10**9])
+
+            params_policy = jnp.array([self.kx, self.kv])
+            init_state = jnp.array(self.current_state)
+
+            t0 = self.get_clock().now().nanoseconds
+            kx, kv = optimizer.optimize(init_state, deltaT, params_policy)
+            self.kx, self.kv = np.clip(kx, 0.01, 30), np.clip(kv, 0.01, 30)
+            t1 = self.get_clock().now().nanoseconds
+            self.get_logger().info(f"time taken : {(t1-t0)/10**9}")
+
+    @staticmethod
+    @jit
+    def optimize(init_state, deltaT, params_policy):
+        
+            # gp_train_x = self.training_state        
+            # gp_train_y = self.training_disturbance
+            # params_policy = jnp.array([self.kx, self.kv])
+            # init_state = jnp.array(self.current_state)
+            # print("init state: ", init_state)
+            # self.get_logger().info(f"The State Vector is: {init_state}")
+            # print("initial state type is: ",type(init_state))
+            # print("initial state shape is ", init_state.shape)
+            # print("policy params type is: ",type(params_policy))
+            # print("gp train type is: ",type(gp_train_x), type(gp_train_y))
+            # print("deltaT type is: ",type(deltaT))
+            # ref_pos,ref_vel,ref_acc = self.find_ref_pos_vel_acc(deltaT)
+
+            @jit
+            def body(i, inputs):
+                params_policy = inputs
+                params_policy_grad = optimizer.get_future_reward_grad( init_state, params_policy, deltaT )
+                params_policy_grad = jnp.clip( params_policy_grad, -optimizer.grad_clip, optimizer.grad_clip )
+                params_policy = params_policy - optimizer.custom_lr_rate * params_policy_grad
+                return params_policy        
+            params_policy = lax.fori_loop(0, optimizer.iter_adam_custom, body, params_policy)
+            op_kx = params_policy[0]
+            op_kv = params_policy[1]
+            return op_kx, op_kv
     
     def find_ref_coord(self, deltaT):
         # if self.trajectory_type == 'circle':
@@ -365,12 +388,25 @@ class optimizer(Node):
         # print("Type of value is: ", type(value_.item()))
         msg.value = float(value_)
         return msg
-    def publish_gains(self):
-        message_kx = self.create_ParameterReq_msg('QUAD_KX', self.kx)
+    # def publish_gains(self):
         
+    #     message_kv = self.create_ParameterReq_msg('QUAD_KV', self.kv)
+    #     self.publisher_.publish(message_kv)
+    #     self.publisher_.publish(message_kv)
+
+    #     message_kx = self.create_ParameterReq_msg('QUAD_KX', self.kx)
+    #     self.publisher_.publish(message_kx)
+    #     self.publisher_.publish(message_kx)
+        
+    def kx_callback(self):
+        message_kx = self.create_ParameterReq_msg('QUAD_KX', self.kx)
         self.publisher_.publish(message_kx)
+        self.get_logger().info(f'X: QUAD_KX is:  {self.kx} and QUAD_KV is: {self.kv}')
+
+    def kv_callback(self):
         message_kv = self.create_ParameterReq_msg('QUAD_KV', self.kv)
         self.publisher_.publish(message_kv)
+        self.get_logger().info(f'Y: QUAD_KX is:  {self.kx} and QUAD_KV is: {self.kv}')
         
     # def publish_optimal_gains(self):
     #     print(self.kx, self.kv)
