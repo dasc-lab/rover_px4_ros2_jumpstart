@@ -63,6 +63,7 @@ class driveCircle(Node):
         msg.center_x = self.center_x
         msg.center_y = self.center_y
         msg.start_time = self.start_time
+        msg.height = self.height
         return msg
     
     def create_TrajectorySetpoint_msg(self):

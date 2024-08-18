@@ -8,4 +8,5 @@ float32 radius
 float32 angular_vel
 float32 center_x
 float32 center_y
+float32 height
 
