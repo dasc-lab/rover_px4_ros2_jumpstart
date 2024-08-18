@@ -18,7 +18,7 @@ services:
       - DISPLAY=$DISPLAY
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
-      - FASTRTPS_DEFAULT_PROFILES_FILE=/home/colcon_ws/rtps_udp_profile.xml
+        #- FASTRTPS_DEFAULT_PROFILES_FILE=/home/colcon_ws/rtps_udp_profile.xml
       - ROS_DOMAIN_ID=0
     runtime: nvidia
     deploy:
@@ -46,7 +46,7 @@ services:
       - DISPLAY=$DISPLAY
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
-      - FASTRTPS_DEFAULT_PROFILES_FILE=/home/colcon_ws/rtps_udp_profile.xml
+        #- FASTRTPS_DEFAULT_PROFILES_FILE=/home/colcon_ws/rtps_udp_profile.xml
       - ROS_DOMAIN_ID=0
     runtime: nvidia
     deploy:

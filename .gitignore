@@ -1,3 +1,5 @@
 colcon_ws/build/
 colcon_ws/install/
 colcon_ws/log/
+colcon_ws/src/online_op/online_op/__pycache__/*
+colcon_ws/src/online_op/online_op/__pycache__/

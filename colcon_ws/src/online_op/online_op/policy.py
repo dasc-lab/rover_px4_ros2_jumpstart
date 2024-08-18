@@ -29,7 +29,7 @@ def policy( states, policy_params,reference):
     acc_ref = jnp.reshape(acc_ref, (-1,1))
     ex = states[0:3] - pos_ref
     # print("policy pos error is: ", ex[0].item(), ex[1].item(), ex[2].item())
-    hcb.id_print(ex)
+    # hcb.id_print(ex)
     # ex = lax.cond( jnp.linalg.norm(ex)>2, lambda z: 2.0 * z / jnp.linalg.norm(z), lambda z: z, ex )
     ev = states[3:6] - vel_ref
     # ev = lax.cond( jnp.linalg.norm(ev)>5, lambda z: 5.0 * z / jnp.linalg.norm(z), lambda z: z, ev )
@@ -74,7 +74,7 @@ figure8_origin_y =      [0.0, 0.0]
 
 
 @jit
-def circle_pos_vel_acc(deltaT, radius, angular_vel, origin_x, origin_y):
+def circle_pos_vel_acc(deltaT, radius, angular_vel, origin_x, origin_y, height):
     '''
     Calculate reference pos, vel, and acc for the drone flying in a circular trajectory in NED frame.
     '''
@@ -82,22 +82,22 @@ def circle_pos_vel_acc(deltaT, radius, angular_vel, origin_x, origin_y):
     ######################################################
     ################## Reference Pos #####################
     ######################################################
-    x = radius * jnp.cos(angular_vel * deltaT) + origin_x
-    y = radius * jnp.sin(angular_vel * deltaT) + origin_y
-    ref_pos = jnp.array([y,  x, -0.4])
+    x = radius * jnp.cos(angular_vel * deltaT[0]) + origin_x
+    y = radius * jnp.sin(angular_vel * deltaT[0]) + origin_y
+    ref_pos = jnp.array([y,  x, height])
 
     ######################################################
     ################## Reference Vel #####################
     ######################################################
-    vx = -radius * angular_vel* jnp.sin(angular_vel * deltaT)
-    vy = radius * angular_vel* jnp.cos(angular_vel * deltaT)
+    vx = -radius * angular_vel* jnp.sin(angular_vel * deltaT[0])
+    vy = radius * angular_vel* jnp.cos(angular_vel * deltaT[0])
     ref_vel = jnp.array([vy, vx,0])
 
     ######################################################
     ################## Reference Acc #####################
     ######################################################
-    ax = -radius * (angular_vel**2) * jnp.cos(angular_vel * deltaT)
-    ay = -radius * (angular_vel**2) * jnp.sin(angular_vel * deltaT)
+    ax = -radius * (angular_vel**2) * jnp.cos(angular_vel * deltaT[0])
+    ay = -radius * (angular_vel**2) * jnp.sin(angular_vel * deltaT[0])
     ref_acc = jnp.array([ay, ax, 0])
 
     ######################################################
@@ -108,28 +108,28 @@ def circle_pos_vel_acc(deltaT, radius, angular_vel, origin_x, origin_y):
 
 
 
-def figure8_pos_vel_acc(deltaT, radius, angular_vel, origin_x, origin_y):
+def figure8_pos_vel_acc(deltaT, radius, angular_vel, origin_x, origin_y, height):
     '''
     Calculate reference pos, vel, and acc for the drone flying in figure8 trajectory in NED frame
     '''
     ######################################################
     ################## Reference Pos #####################
     ######################################################
-    x = radius * jnp.sin(angular_vel * deltaT) + origin_x
-    y = radius * jnp.sin(angular_vel * deltaT) * jnp.cos(angular_vel * deltaT) + origin_y
-    ref_pos = [y,  x, -0.4]
+    x = radius * jnp.sin(angular_vel * deltaT[0]) + origin_x
+    y = radius * jnp.sin(angular_vel * deltaT[0]) * jnp.cos(angular_vel * deltaT[0]) + origin_y
+    ref_pos = [y,  x, height]
 
     ######################################################
     ################## Reference Vel #####################
     ######################################################
-    vx = radius * angular_vel * jnp.cos(angular_vel * deltaT)
-    vy = radius * angular_vel * (jnp.cos(angular_vel * deltaT)**2-jnp.sin(angular_vel * deltaT)**2)
+    vx = radius * angular_vel * jnp.cos(angular_vel * deltaT[0])
+    vy = radius * angular_vel * (jnp.cos(angular_vel * deltaT[0])**2-jnp.sin(angular_vel * deltaT[0])**2)
     ref_vel= [vy,vx,0]
     ######################################################
     ################## Reference Acc #####################
     ######################################################
-    ax = -radius * (angular_vel**2) * jnp.sin(angular_vel * deltaT)
-    ay = -radius * 4 * (angular_vel**2) * jnp.sin(angular_vel * deltaT) * jnp.cos(angular_vel * deltaT)
+    ax = -radius * (angular_vel**2) * jnp.sin(angular_vel * deltaT[0])
+    ay = -radius * 4 * (angular_vel**2) * jnp.sin(angular_vel * deltaT[0]) * jnp.cos(angular_vel * deltaT[0])
     ref_acc = [ay,ax,0]
     pos = jnp.array(ref_pos)
     vel = jnp.array(ref_vel)

@@ -75,3 +75,4 @@ RUN echo 'alias px4="ros2 launch all_launch px4.launch.py"' >> ~/.bashrc
 RUN echo "alias gpsetup='source /home/wind_disturbance_experiment/GP/gp_advanced/FORESEE/setup.sh'" >> ~/.bashrc
 # RUN export PYTHONPATH=$PYTHONPATH:/home/wind_disturbance_experiment/GP/gp_advanced/FORESEE/GPJax
 RUN echo "alias sim='cd /home/wind_disturbance_experiment/GP/gp_advanced/simulation'" >> ~/.bashrc
+RUN echo "alias gpsetup='export PYTHONPATH=$PYTHONPATH:/home/colcon_ws/src/online_op/online_op/GPJax/'" >> ~/.bashrc
