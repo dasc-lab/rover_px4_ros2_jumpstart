@@ -3,7 +3,8 @@ from jax import jit, vmap, lax
 import jax
 def state_ref(t):
     dataset_index = 1
-    pos, vel, acc = figure8_pos_vel_acc( t, figure8_radius[dataset_index], figure8_angular_vel[dataset_index], figure8_origin_x[dataset_index], figure8_origin_y[dataset_index] )
+    # pos, vel, acc = figure8_pos_vel_acc( t, figure8_radius[dataset_index], figure8_angular_vel[dataset_index], figure8_origin_x[dataset_index], figure8_origin_y[dataset_index] )
+    pos, vel, acc = circle_pos_vel_acc( t, cir_radius[dataset_index], cir_angular_vel[dataset_index], cir_origin_x[dataset_index], cir_origin_y[dataset_index] )
     return pos.reshape(-1,1), vel.reshape(-1,1), acc.reshape(-1,1)
 # policy_params = [14, 7.4]
 policy_params = [7, 4]
@@ -44,7 +45,7 @@ def policy( t, states, policy_params):
     # thrust = jnp.clip( thrust, -14*m, 14*m ) #tanh/sigmoid
     return thrust / m, pos_ref, vel_ref
 
-cir_radius =      [0.2, 0.2, 0.2, 0.2, 0.4]
+cir_radius =      [0.2, 0.4, 0.2, 0.2, 0.4]
 cir_angular_vel = [1.0, 1.0, 1.0, 1.5, 1.0]
 ###### in world frame NOT NED ######
 cir_origin_x =    [0.0, 0.6, 0.8, 0.8, 0.6]
@@ -78,7 +79,7 @@ def circle_pos_vel_acc(deltaT, radius, angular_vel, origin_x, origin_y):
     ######################################################
     x = radius * jnp.cos(angular_vel * deltaT) + origin_x
     y = radius * jnp.sin(angular_vel * deltaT) + origin_y
-    ref_pos = jnp.array([y,  x, -0.4])
+    ref_pos = jnp.array([y,  x, -0.5])
 
     ######################################################
     ################## Reference Vel #####################
