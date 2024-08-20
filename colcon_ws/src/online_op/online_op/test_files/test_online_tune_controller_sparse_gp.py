@@ -107,9 +107,9 @@ def setup_predict_state_gp(file_path1, file_path2, file_path3, gp_train_x, gp_tr
     y = gp_train_y
 
     ###### precomputes all necessary inverses to save time ######
-    D0 = gpx.Dataset(X=x, y=y[:,0].reshape(-1,1))
-    D1 = gpx.Dataset(X=x, y=y[:,1].reshape(-1,1))
-    D2 = gpx.Dataset(X=x, y=y[:,2].reshape(-1,1))
+    D0 = gpx.Dataset(X=x, y=y[0].reshape(-1,1))
+    D1 = gpx.Dataset(X=x, y=y[1].reshape(-1,1))
+    D2 = gpx.Dataset(X=x, y=y[2].reshape(-1,1))
 
     L0, L0_inv, Lz0, Lz_inv0, Kzz_inv_Kzx_diff0 = gp0.compute_sigma_inv(train_data=D0)
     L1, L1_inv, Lz1, Lz_inv1, Kzz_inv_Kzx_diff1 = gp1.compute_sigma_inv(train_data=D1)
@@ -139,15 +139,15 @@ def setup_future_reward_func(file_path1, file_path2, file_path3, dynamics_type='
     y = gp_train_y
 
     ###### precomputes all necessary inverses to save time ######
-    D0 = gpx.Dataset(X=x, y=y[:,0].reshape(-1,1))
-    D1 = gpx.Dataset(X=x, y=y[:,1].reshape(-1,1))
-    D2 = gpx.Dataset(X=x, y=y[:,2].reshape(-1,1))
+    D0 = gpx.Dataset(X=x, y=y[0].reshape(-1,1))
+    D1 = gpx.Dataset(X=x, y=y[1].reshape(-1,1))
+    D2 = gpx.Dataset(X=x, y=y[2].reshape(-1,1))
     L0, L0_inv, Lz0, Lz_inv0, Kzz_inv_Kzx_diff0 = gp0.compute_sigma_inv(train_data=D0)
     L1, L1_inv, Lz1, Lz_inv1, Kzz_inv_Kzx_diff1 = gp1.compute_sigma_inv(train_data=D1)
     L2, L2_inv, Lz2, Lz_inv2, Kzz_inv_Kzx_diff2 = gp2.compute_sigma_inv(train_data=D2)
 
     @jit
-    def compute_reward(X, policy_params):
+    def compute_reward(X, policy_params, init_time):
         '''
         Performs Gradient Descent
         '''
@@ -163,7 +163,7 @@ def setup_future_reward_func(file_path1, file_path2, file_path3, dynamics_type='
             '''
             Performs UT-EC with 6 states
             '''
-            t = h * optimize_dt
+            t = init_time + h * optimize_dt
             reward, states, weights = inputs
             control_inputs, pos_ref, vel_ref = policy( t, states, policy_params )         # mean_position = get_mean( states, weights )
             if dynamics_type=='ideal':
@@ -182,10 +182,10 @@ def setup_future_reward_func(file_path1, file_path2, file_path3, dynamics_type='
         return reward
     return compute_reward
 
-print(model_path)
-file_path1 = model_path + "sparsegp_model_x_norm5_clipped_moredata.pkl"
-file_path2 = model_path + "sparsegp_model_y_norm5_clipped_moredata.pkl"
-file_path3 = model_path + "sparsegp_model_z_norm5_clipped_moredata.pkl"
+# print(model_path)
+# file_path1 = model_path + "sparsegp_model_x_norm5_clipped_moredata.pkl"
+# file_path2 = model_path + "sparsegp_model_y_norm5_clipped_moredata.pkl"
+# file_path3 = model_path + "sparsegp_model_z_norm5_clipped_moredata.pkl"
 
 
 
@@ -198,20 +198,33 @@ file_path3 = model_path + "sparsegp_model_z_norm5_clipped_moredata.pkl"
 
 home_path_op = '/home/colcon_ws/src/online_op/online_op/'
 gp_file_path = home_path_op+'gp_models/'
+trainset_file_path = home_path_op+'dataset/'
+disturbance_path = trainset_file_path + 'disturbance_new.npy'
+input_path = trainset_file_path + 'input_new.npy'
+
+gp_train_x = jnp.load(input_path)
+gp_train_x = gp_train_x[::140]
+gp_train_y = jnp.load(disturbance_path)
+gp_train_y = gp_train_y[::140].T
+
 file_path1 = gp_file_path + 'sparsegp_model_x_norm5_clipped_moredata.pkl'
 file_path2 = gp_file_path + 'sparsegp_model_y_norm5_clipped_moredata.pkl'
 file_path3 = gp_file_path + 'sparsegp_model_z_norm5_clipped_moredata.pkl'
+
+
+
+
 # self.gp0 = initialize_gp_prediction(gp_file_x)
 # self.gp1 = initialize_gp_prediction(gp_file_y)
 # self.gp2 = initialize_gp_prediction(gp_file_z)
 
 
-trainset_file_path = home_path_op+'dataset/'
-train_x = jnp.load(trainset_file_path + 'training_disturbance_x.npy')
-train_y = jnp.load(trainset_file_path + 'training_disturbance_y.npy')
-train_z = jnp.load(trainset_file_path + 'training_disturbance_z.npy')
-gp_train_x = jnp.load(trainset_file_path+'training_input.npy')
-gp_train_y = jnp.column_stack((train_x, train_y, train_z))
+
+# train_x = jnp.load(trainset_file_path + 'training_disturbance_x.npy')
+# train_y = jnp.load(trainset_file_path + 'training_disturbance_y.npy')
+# train_z = jnp.load(trainset_file_path + 'training_disturbance_z.npy')
+# gp_train_x = jnp.load(trainset_file_path+'training_input.npy')
+# gp_train_y = jnp.column_stack((train_x, train_y, train_z))
 
 # import pdb
 # pdb.set_trace()
@@ -246,9 +259,11 @@ predict_state = setup_predict_states(file_path1, file_path2, file_path3, dynamic
 get_future_reward_grad = jit(grad(get_future_reward, argnums=1))
 get_future_reward_value_and_grad = jit(value_and_grad(get_future_reward, argnums=1))
 
-get_future_reward( state_vector, jnp.array([7.0, 4.0]) )
-get_future_reward_grad( state_vector, jnp.array([7.0, 4.0]) )
+get_future_reward( state_vector, jnp.array([7.0, 4.0]), 0.0 )
 
+
+print(f"grads: {get_future_reward_grad( jnp.zeros((6,1)), jnp.array([7.0, 4.0]), 0.0 )}")
+exit()
 params_init = jnp.array([7.0, 4.0])
 key, subkey = jax.random.split(key)
 
@@ -261,12 +276,13 @@ def train_policy_jaxscipy(init_state, params_policy):
     return params_policy
 
 @jit
-def train_policy_custom(init_state, params_policy):
+def train_policy_custom(init_state, params_policy, init_time):
 
     @jit
     def body(i, inputs):
         params_policy = inputs
-        params_policy_grad = get_future_reward_grad( init_state, params_policy )
+        params_policy_grad = get_future_reward_grad( init_state, params_policy, init_time )
+        jax.debug.print("grads {x}", x=params_policy_grad)
         params_policy_grad = jnp.clip( params_policy_grad, -grad_clip, grad_clip )
         params_policy = params_policy - custom_gd_lr_rate * params_policy_grad
         return params_policy
@@ -293,7 +309,8 @@ def predict_states(init_state, policy_params, key, run_optimizer=False):
             if optimizer=='scipy':
                 policy_params = train_policy_jaxscipy(next_state, policy_params)
             elif optimizer=='custom_gd':
-                policy_params = train_policy_custom(next_state, policy_params)
+                policy_params = train_policy_custom(next_state, policy_params,h*predict_dt)
+                print(f"params: {policy_params}")
             else:
                 print(f"NOT IMPLEMENTED ERROR")
                 exit()
@@ -304,11 +321,11 @@ def predict_states(init_state, policy_params, key, run_optimizer=False):
 # Unoptimized Parameters
 states, states_ref = predict_states(state_vector, jnp.copy(params_init), subkey, run_optimizer=False)
 key, subkey = jax.random.split(key)
-# states2, states_ref2 = predict_states(state_vector, jnp.copy(params_init), subkey, run_optimizer=False)
+states2, states_ref2 = predict_states(state_vector, jnp.copy(params_init), subkey, run_optimizer=False)
 fig, ax = plt.subplots()
 ax.plot(states_ref[0,:], states_ref[1,:], 'r', label='reference')
 ax.plot(states[0,:], states[1,:], 'g', label='states unoptimized')
-# ax.plot(states2[0,:], states2[1,:], 'g--', label='states2 unoptimized')
+ax.plot(states2[0,:], states2[1,:], 'g--', label='states2 unoptimized')
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 # plt.show()
@@ -317,10 +334,10 @@ ax.set_ylabel('Y')
 print(f"Optimizing now!")
 key, subkey = jax.random.split(key)
 states_optimized, states_ref_optimized= predict_states(state_vector, jnp.copy(params_init), subkey, run_optimizer=True)
-# key, subkey = jax.random.split(key)
-# states_optimized2, states_ref_optimized2 = predict_states(state_vector, jnp.copy(params_init), subkey, run_optimizer=True)
+key, subkey = jax.random.split(key)
+states_optimized2, states_ref_optimized2 = predict_states(state_vector, jnp.copy(params_init), subkey, run_optimizer=True)
 ax.plot(states_optimized[0,:], states_optimized[1,:], 'k', label='states optimized')
-# ax.plot(states_optimized2[0,:], states_optimized2[1,:], 'k--', label='states2 optimized')
+ax.plot(states_optimized2[0,:], states_optimized2[1,:], 'k--', label='states2 optimized')
 
 
 

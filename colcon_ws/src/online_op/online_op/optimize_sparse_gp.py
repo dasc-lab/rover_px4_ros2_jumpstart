@@ -3,6 +3,8 @@ import rclpy
 import rclpy.node
 import sys, os
 from std_msgs.msg import Bool
+from nav_msgs.msg import Path
+from geometry_msgs.msg import PoseStamped
 from functools import partial
 current_dir = os.path.dirname(os.path.abspath(__file__))
 # current_dir = os.getcwd()
@@ -41,8 +43,10 @@ class optimizer(Node):
 
     get_future_reward = None
     get_future_reward_grad = None
-    grad_clip = 20
+    grad_clip = 1.0 #20
     custom_lr_rate = 0.1
+    iter_adam_custom = 1
+    trajectory_predictor = None
     def __init__(self):
         super().__init__('optimizer')
 
@@ -75,7 +79,7 @@ class optimizer(Node):
         self.center_y = 0.0 #None
         self.angular_vel = 1.0 #None
         self.trajectory_type_valid = False
-        self.horizon = 50
+        self.horizon = 30
 
         ###### set up initial drone parameters ######
         self.kx = 7.0
@@ -112,8 +116,8 @@ class optimizer(Node):
         
         # self.op_dt = 0.05
         optimizer.custom_lr_rate = 0.1
-        optimizer.grad_clip = 20.0
-        self.iter_adam_custom = 200
+        optimizer.grad_clip = 1.0 #20.0
+        optimizer.iter_adam_custom = 1 #200
         self.optimizer_init = False
         
         ###### set up mavlink ######
@@ -123,6 +127,7 @@ class optimizer(Node):
         # self.get_logger().info("Mavlink Connected")
         ###### set up publisher for pxhawk ######
         self.publisher_ = self.create_publisher(ParameterReq,'/px4_1/fmu/in/parameter_req',10)
+        # self.param_publisher_ = self.create_publisher(ParameterReq,'/px4_1/fmu/in/parameter_req',10)
 
         ################## set up Subscription ##################
         self.drone_coordinates = self.create_subscription(
@@ -141,16 +146,26 @@ class optimizer(Node):
         
         self.optimizer_init_sub = self.create_subscription( Bool, '/optimizer_init', self.optimizer_init_callback, 10 )
 
-        # Initialize reward function and its gradient
-        optimizer.get_future_reward = self.setup_reward_func()
-        optimizer.get_future_reward_grad = jit(grad(optimizer   .get_future_reward, argnums=(1)))
+        self.timer_period = 0.05
+        self.timer_kx = self.create_timer(0.05, self.kx_callback)
+        self.timer_ky = self.create_timer(0.05, self.kv_callback)
+        self.timer_optimize = self.create_timer(0.05, self.optimize_callback)
 
-        # Run once to JIT
-        params_policy = jnp.array([self.kx, self.kv])
-        init_state = jnp.array([0.0,0,0,0,0,0]).reshape(-1,1)            
-        optimizer.get_future_reward(init_state, params_policy, jnp.array([0]) )
-        optimizer.get_future_reward_grad( init_state, params_policy, jnp.array([0]) )
-        self.get_logger().info("Gaussian Process Initialized")
+        self.reference_path_publisher = self.create_publisher( Path, '/reference_path', 1)
+        self.timer_path = self.create_timer(0.05, self.trajectory_callback)
+
+        
+
+        # # Initialize reward function and its gradient
+        # optimizer.get_future_reward = self.setup_reward_func()
+        # optimizer.get_future_reward_grad = jit(grad(optimizer   .get_future_reward, argnums=(1)))
+
+        # # Run once to JIT
+        # params_policy = jnp.array([self.kx, self.kv])
+        # init_state = jnp.array([0.0,0,0,0,0,0]).reshape(-1,1)            
+        # optimizer.get_future_reward(init_state, params_policy, jnp.array([0]) )
+        # optimizer.get_future_reward_grad( init_state, params_policy, jnp.array([0]) )
+        # self.get_logger().info("Gaussian Process Initialized")
 
     def optimizer_init_callback(self, msg):
         self.optimizer_init = msg.data
@@ -164,19 +179,29 @@ class optimizer(Node):
             self.angular_vel = msg.angular_vel
             self.center_x = msg.center_x
             self.center_y = msg.center_y
+            self.height = msg.height
             self.start_time = msg.start_time
 
             # Initialize reward function and its gradient
             optimizer.get_future_reward = self.setup_reward_func()
-            optimizer.get_future_reward_grad = jit(grad(self.get_future_reward, argnums=(1)))
+            optimizer.get_future_reward_grad = jit(grad(optimizer.get_future_reward, argnums=(1)))
+
+            
 
             # Run once to JIT
             params_policy = jnp.array([self.kx, self.kv])
-            init_state = jnp.array([0,0,0,0,0,0])            
+            init_state = jnp.array([0.0,0,0,0,0,0]).reshape(-1,1)            
             optimizer.get_future_reward(init_state, params_policy, jnp.array([0]) )
             optimizer.get_future_reward_grad( init_state, params_policy, jnp.array([0]) )
             self.get_logger().info("Gaussian Process Initialized")
 
+            deltaT = jnp.array([(self.get_clock().now().nanoseconds-self.start_time)/10**9])
+            self.get_logger().info(f"{optimizer.get_future_reward_grad( jnp.zeros((6,1)), jnp.array([7.0, 4.0]), 0*deltaT )}")
+
+            # Run once for JIT
+            optimizer.trajectory_predictor = self.setup_reference_trajectory_prediction()
+            optimizer.trajectory_predictor(deltaT)
+        
 
 
             self.trajectory_type_valid = True
@@ -189,44 +214,62 @@ class optimizer(Node):
             self.current_vel = [msg.vx,msg.vy,msg.vz]
             self.current_state = jnp.array(self.current_pos + self.current_vel)
             # print(self.current_state)
+            # self.get_logger().info(f'state is:  {self.current_state}')
 
-            # return
-
-            if not self.optimizer_init:
-                return
+            # if not self.optimizer_init:
+            #     return
             
-            if self.trajectory_type_valid is True:
-                deltaT = jnp.array([(self.get_clock().now().nanoseconds-self.start_time)/10**9])
-                # ref_coord = self.find_ref_coord(deltaT)
-                self.kx, self.kv = self.optimize(deltaT)
-                self.get_logger().info(f'QUAD_KX is:  {self.kx} and QUAD_KV is: {self.kv}')
-                self.publish_gains()
+            # if self.trajectory_type_valid is True:
+            #     deltaT = jnp.array([(self.get_clock().now().nanoseconds-self.start_time)/10**9])
+            #     # ref_coord = self.find_ref_coord(deltaT)
+            #     self.kx, self.kv = self.optimize(deltaT)
+            #     # self.get_logger().info(f'QUAD_KX is:  {self.kx} and QUAD_KV is: {self.kv}')
+            #     # self.publish_gains()
 
     def initialize_gp(self):
         self.get_logger().info('Initializing Gaussian Process Models')
         ###### load gaussian process models ######
-        gp_file_path = home_path_op+'gp_models/'
-        gp_file_x = gp_file_path + 'sparsegp_model_x_norm5_clipped_moredata.pkl'
-        gp_file_y = gp_file_path + 'sparsegp_model_y_norm5_clipped_moredata.pkl'
-        gp_file_z = gp_file_path + 'sparsegp_model_z_norm5_clipped_moredata.pkl'
+        # gp_file_path = home_path_op+'gp_models/'
+        # gp_file_x = gp_file_path + 'sparsegp_model_x_norm5_clipped_moredata.pkl'
+        # gp_file_y = gp_file_path + 'sparsegp_model_y_norm5_clipped_moredata.pkl'
+        # gp_file_z = gp_file_path + 'sparsegp_model_z_norm5_clipped_moredata.pkl'
         
         ###### load Datasets ######
-        trainset_file_path = home_path_op+'dataset/'
-        train_x = jnp.load(trainset_file_path + 'training_disturbance_x.npy')
-        train_y = jnp.load(trainset_file_path + 'training_disturbance_y.npy')
-        train_z = jnp.load(trainset_file_path + 'training_disturbance_z.npy')
-        x = jnp.load(trainset_file_path+'training_input.npy')
-        y = jnp.column_stack((train_x, train_y, train_z))
+        # trainset_file_path = home_path_op+'dataset/'
+        # train_x = jnp.load(trainset_file_path + 'training_disturbance_x.npy')
+        # train_y = jnp.load(trainset_file_path + 'training_disturbance_y.npy')
+        # train_z = jnp.load(trainset_file_path + 'training_disturbance_z.npy')
+        # x = jnp.load(trainset_file_path+'training_input.npy')
+        # y = jnp.column_stack((train_x, train_y, train_z))
 
-        self.gp0 = initialize_gp_prediction(gp_file_x)
-        self.gp1 = initialize_gp_prediction(gp_file_y)
-        self.gp2 = initialize_gp_prediction(gp_file_z)
+
+        home_path_op = '/home/colcon_ws/src/online_op/online_op/'
+        gp_file_path = home_path_op+'gp_models/'
+        trainset_file_path = home_path_op+'dataset/'
+        disturbance_path = trainset_file_path + 'disturbance_new.npy'
+        input_path = trainset_file_path + 'input_new.npy'
+
+        gp_train_x = jnp.load(input_path)
+        gp_train_x = gp_train_x[::140]
+        gp_train_y = jnp.load(disturbance_path)
+        gp_train_y = gp_train_y[::140].T
+
+        file_path1 = gp_file_path + 'sparsegp_model_x_norm5_clipped_moredata.pkl'
+        file_path2 = gp_file_path + 'sparsegp_model_y_norm5_clipped_moredata.pkl'
+        file_path3 = gp_file_path + 'sparsegp_model_z_norm5_clipped_moredata.pkl'
+
+        self.gp0 = initialize_gp_prediction(file_path1)
+        self.gp1 = initialize_gp_prediction(file_path2)
+        self.gp2 = initialize_gp_prediction(file_path3)
+
+        x = gp_train_x
+        y = gp_train_y
         
-        trainset_slice = 50
-        x = x[::trainset_slice]
-        y = y[::trainset_slice].T
-        self.training_state = x
-        self.training_disturbance = y
+        # trainset_slice = 50
+        # x = x[::trainset_slice]
+        # y = y[::trainset_slice].T
+        # self.training_state = x
+        # self.training_disturbance = y
         
         D0 = gpx.Dataset(X=x, y=y[0].reshape(-1,1))
         D1 = gpx.Dataset(X=x, y=y[1].reshape(-1,1))
@@ -239,6 +282,38 @@ class optimizer(Node):
         self.L0, self.L0_inv, self.Lz0, self.Lz_inv0, self.Kzz_inv_Kzx_diff0 = self.gp0.compute_sigma_inv(train_data=D0)
         self.L1, self.L1_inv, self.Lz1, self.Lz_inv1, self.Kzz_inv_Kzx_diff1 = self.gp1.compute_sigma_inv(train_data=D1)
         self.L2, self.L2_inv, self.Lz2, self.Lz_inv2, self.Kzz_inv_Kzx_diff2 = self.gp2.compute_sigma_inv(train_data=D2)
+
+
+    def setup_reference_trajectory_prediction(self):
+
+        trajectory_type_int = self.trajectory_type_int
+        radius = self.radius
+        angular_vel = self.angular_vel
+        center_x = self.center_x
+        center_y = self.center_y
+        height = self.height
+        opt_dt = 0.05
+        horizon = self.horizon
+
+        print(f"INFO: {radius}, {angular_vel}, {center_x}, {center_y}, {height}, {horizon} {self.start_time}")
+
+        @jit
+        def func(deltaT):
+            reference_states = jnp.zeros((3,horizon))
+            reference_yaws = jnp.zeros(horizon)
+
+            @jit
+            def body(h, inputs):
+                reference_states, reference_yaws = inputs
+                t = deltaT + h * opt_dt
+                ref_pos,ref_vel,ref_acc = find_ref_pos_vel_acc(trajectory_type_int,t,[radius, angular_vel, center_x, center_y, height])
+                reference_states = reference_states.at[:,h].set( ref_pos )
+                reference_yaws = reference_yaws.at[h].set( jnp.arctan2( ref_vel[1], ref_vel[0] ) )
+                return reference_states, reference_yaws
+            reference_states, reference_yaws = lax.fori_loop( 0, horizon, body, (reference_states, reference_yaws) )
+            return reference_states, reference_yaws   
+
+        return func     
 
 
     def setup_reward_func(self):
@@ -272,6 +347,9 @@ class optimizer(Node):
             # reward = 0 + w1 * (kx-7)**2 + w2 * (kv-4)**2
             reward = w1 * (kx)**2 + w2 * (kv)**2
             # reward = 0
+
+            # reference_positions = jnp.zeros((3,horizon))
+            # reference_yaws = jnp.zeros(horizon)
             def body(h, inputs):
                 '''
                 Performs UT-EC with 6 states
@@ -279,6 +357,8 @@ class optimizer(Node):
                 t = deltaT + h * opt_dt
                 reward, states, weights = inputs
                 ref_pos,ref_vel,ref_acc = find_ref_pos_vel_acc(trajectory_type_int,t,[radius, angular_vel, center_x, center_y, height])
+                # reference_positions = reference_positions.at[:,h].set( ref_pos )
+                # reference_yaws = reference_yaws.at[h].set( jnp.arctan2( ref_vel[1], ref_vel[0] ) )
                 control_inputs, pos_ref, vel_ref = policy( states, policy_params, [ref_pos,ref_vel,ref_acc])         # mean_position = get_mean( states, weights )
                 next_states_mean, next_states_cov = get_next_states_with_sparse_gp_sigma_inv( states, control_inputs, opt_dt, [gp0, gp1, gp2], [L0, L1, L2], [L0_inv, L1_inv, L2_inv],  [Lz0, Lz1, Lz2], [Lz_inv0, Lz_inv1, Lz_inv2], [Kzz_inv_Kzx_diff0, Kzz_inv_Kzx_diff1, Kzz_inv_Kzx_diff2])
                 next_states_expanded, next_weights_expanded = sigma_point_expand_with_mean_cov( next_states_mean, next_states_cov, weights)
@@ -287,48 +367,94 @@ class optimizer(Node):
                 weights = next_weights
                 reward = reward + reward_func( states, weights, pos_ref, vel_ref ) # reward is loss
                 return reward, states, weights
-            reward =  lax.fori_loop( 0, horizon, body, (reward, states, weights) )[0]
+            reward, _, _, =  lax.fori_loop( 0, horizon, body, (reward, states, weights) )
             return reward
         return compute_reward
 
     
     def optimize_scipy(self, deltaT):
-        print("Optimizing with Scipy")
+        # print("Optimizing with Scipy")
         gp_train_x = self.training_state
         
         gp_train_y = self.training_disturbance
         params_policy = jnp.array([self.kx, self.kv])
         init_state = jnp.array(self.current_state)
         ref_pos,ref_vel,ref_acc = self.find_ref_pos_vel_acc(deltaT)
-        
-    def optimize(self,deltaT):
-        
-        print("Optimizing")
-        # gp_train_x = self.training_state        
-        # gp_train_y = self.training_disturbance
-        params_policy = jnp.array([self.kx, self.kv])
-        init_state = jnp.array(self.current_state)
-        # print("init state: ", init_state)
-        # self.get_logger().info(f"The State Vector is: {init_state}")
-        # print("initial state type is: ",type(init_state))
-        # print("initial state shape is ", init_state.shape)
-        # print("policy params type is: ",type(params_policy))
-        # print("gp train type is: ",type(gp_train_x), type(gp_train_y))
-        # print("deltaT type is: ",type(deltaT))
-        # ref_pos,ref_vel,ref_acc = self.find_ref_pos_vel_acc(deltaT)
 
-        @jit
-        def body(i, inputs):
-            params_policy = inputs
-            params_policy_grad = optimizer.get_future_reward_grad( init_state, params_policy, deltaT )
-            params_policy_grad = jnp.clip( params_policy_grad, -optimizer.grad_clip, optimizer.grad_clip )
-            params_policy = params_policy - optimizer.custom_lr_rate * params_policy_grad
-            return params_policy        
-        # print(type(self.kx), type(self.kv))
-        params_policy = lax.fori_loop(0, self.iter_adam_custom, body, params_policy)
-        op_kx = params_policy[0]
-        op_kv = params_policy[1]
-        return op_kx, op_kv
+
+    def optimize_callback(self):
+        if not self.optimizer_init:
+            return
+        if self.trajectory_type_valid is True:
+            # self.get_logger().info(f'optimizing')
+            deltaT = jnp.array([(self.get_clock().now().nanoseconds-self.start_time)/10**9])
+
+            params_policy = jnp.array([self.kx, self.kv])
+            init_state = jnp.array(self.current_state).reshape(-1,1)
+
+            # params_policy = jnp.array([self.kx, self.kv])
+            # init_state = jnp.zeros((6,1))
+
+            t0 = self.get_clock().now().nanoseconds
+            kx, kv = optimizer.optimize(init_state, deltaT, params_policy)
+            self.kx, self.kv = np.clip(kx, 0.01, 30), np.clip(kv, 0.01, 30)
+            t1 = self.get_clock().now().nanoseconds
+            # self.get_logger().info(f"time taken : {(t1-t0)/10**9}")
+
+    def trajectory_callback(self):
+        if self.trajectory_type_valid is True:
+            deltaT = jnp.array([(self.get_clock().now().nanoseconds-self.start_time)/10**9])
+            predicted_path, predicted_yaws = optimizer.trajectory_predictor( deltaT )
+            # print(predicted_path)
+            # print(f"hello")
+            # print(predicted_yaws)
+            # self.get_logger().info(f" ref state: {predicted_path[0:3,0]} ")
+            path = Path()
+            path.header.stamp = self.get_clock().now().to_msg()
+            path.header.frame_id = "vicon/world"
+            for i in range(horizon):
+                pose = PoseStamped()
+                pose.header.stamp = self.get_clock().now().to_msg()
+                pose.pose.position.x = float(predicted_path[1,i])
+                pose.pose.position.y = float(predicted_path[0,i])
+                pose.pose.position.z = -float(predicted_path[2,i])
+                pose.pose.orientation.w = float(np.sin(predicted_yaws[i]/2))
+                pose.pose.orientation.x = 0.0
+                pose.pose.orientation.y = 0.0
+                pose.pose.orientation.z = float(np.cos(predicted_yaws[i]/2))
+                path.poses.append( pose )
+            self.reference_path_publisher.publish( path )
+
+
+    @staticmethod
+    @jit
+    def optimize(init_state, deltaT, params_policy):
+        
+            # gp_train_x = self.training_state        
+            # gp_train_y = self.training_disturbance
+            # params_policy = jnp.array([self.kx, self.kv])
+            # init_state = jnp.array(self.current_state)
+            # print("init state: ", init_state)
+            # self.get_logger().info(f"The State Vector is: {init_state}")
+            # print("initial state type is: ",type(init_state))
+            # print("initial state shape is ", init_state.shape)
+            # print("policy params type is: ",type(params_policy))
+            # print("gp train type is: ",type(gp_train_x), type(gp_train_y))
+            # print("deltaT type is: ",type(deltaT))
+            # ref_pos,ref_vel,ref_acc = self.find_ref_pos_vel_acc(deltaT)
+
+            @jit
+            def body(i, inputs):
+                params_policy = inputs
+                params_policy_grad = optimizer.get_future_reward_grad( init_state, params_policy, deltaT )
+                jax.debug.print("grad: {x}", x=params_policy_grad)
+                params_policy_grad = jnp.clip( params_policy_grad, -optimizer.grad_clip, optimizer.grad_clip )
+                params_policy = params_policy - optimizer.custom_lr_rate * params_policy_grad
+                return params_policy        
+            params_policy = lax.fori_loop(0, optimizer.iter_adam_custom, body, params_policy)
+            op_kx = params_policy[0]
+            op_kv = params_policy[1]
+            return op_kx, op_kv
     
     def find_ref_coord(self, deltaT):
         # if self.trajectory_type == 'circle':
@@ -365,12 +491,25 @@ class optimizer(Node):
         # print("Type of value is: ", type(value_.item()))
         msg.value = float(value_)
         return msg
-    def publish_gains(self):
-        message_kx = self.create_ParameterReq_msg('QUAD_KX', self.kx)
+    # def publish_gains(self):
         
+    #     message_kv = self.create_ParameterReq_msg('QUAD_KV', self.kv)
+    #     self.publisher_.publish(message_kv)
+    #     self.publisher_.publish(message_kv)
+
+    #     message_kx = self.create_ParameterReq_msg('QUAD_KX', self.kx)
+    #     self.publisher_.publish(message_kx)
+    #     self.publisher_.publish(message_kx)
+        
+    def kx_callback(self):
+        message_kx = self.create_ParameterReq_msg('QUAD_KX', self.kx)
         self.publisher_.publish(message_kx)
+        # self.get_logger().info(f'X: QUAD_KX is:  {self.kx} and QUAD_KV is: {self.kv}')
+
+    def kv_callback(self):
         message_kv = self.create_ParameterReq_msg('QUAD_KV', self.kv)
         self.publisher_.publish(message_kv)
+        # self.get_logger().info(f'Y: QUAD_KX is:  {self.kx} and QUAD_KV is: {self.kv}')
         
     # def publish_optimal_gains(self):
     #     print(self.kx, self.kv)
