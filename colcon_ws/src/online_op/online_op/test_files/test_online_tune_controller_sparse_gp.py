@@ -34,7 +34,7 @@ model_path = trajectory_path + 'models/'
 disturbance_path = trajectory_path + 'disturbance_new.npy'
 input_path = trajectory_path + 'input_new.npy'
 key = random.PRNGKey(2)
-horizon = 30 #50 #300 #200
+horizon = 30 #50 #5 #30 #50 #300 #200
 simT = 300 #300
 predict_dt = 0.05 #0.1 #0.05 #0.01
 optimize_dt = 0.05
@@ -152,6 +152,7 @@ def setup_future_reward_func(file_path1, file_path2, file_path3, dynamics_type='
         Performs Gradient Descent
         '''
         states, weights = initialize_sigma_points(X)
+        # jax.debug.print("deltaT: {x1}, X:{x2}, policy_params: {x3}, states: {x4}, weights: {x5}", x1=init_time, x2=X, x3=policy_params, x4=states, x5=weights)
         kx = policy_params[0]
         kv = policy_params[1]
         w1 = 0.5
@@ -165,6 +166,7 @@ def setup_future_reward_func(file_path1, file_path2, file_path3, dynamics_type='
             '''
             t = init_time + h * optimize_dt
             reward, states, weights = inputs
+            # jax.debug.print("***************************************3*******************************************************")
             control_inputs, pos_ref, vel_ref = policy( t, states, policy_params )         # mean_position = get_mean( states, weights )
             if dynamics_type=='ideal':
                 next_states_mean, next_states_cov = get_next_states_ideal( states, control_inputs, optimize_dt )
@@ -176,6 +178,7 @@ def setup_future_reward_func(file_path1, file_path2, file_path3, dynamics_type='
             next_states, next_weights = sigma_point_compress( next_states_expanded, next_weights_expanded )
             states = next_states
             weights = next_weights
+            # jax.debug.print("control {x}, states {y}", x=control_inputs, y=states)
             reward = reward + reward_func( states, weights, pos_ref, vel_ref ) # reward is loss
             return reward, states, weights
         reward =  lax.fori_loop( 0, horizon, body, (reward, states, weights) )[0]
@@ -259,10 +262,19 @@ predict_state = setup_predict_states(file_path1, file_path2, file_path3, dynamic
 get_future_reward_grad = jit(grad(get_future_reward, argnums=1))
 get_future_reward_value_and_grad = jit(value_and_grad(get_future_reward, argnums=1))
 
-get_future_reward( state_vector, jnp.array([7.0, 4.0]), 0.0 )
+# get_future_reward( state_vector, jnp.array([7.0, 4.0]), 0.0 )
+
+# get_future_reward( jnp.zeros((6,1)), jnp.array([7.0, 4.0]), 0.0 )
+# print(f"reward: {get_future_reward( jnp.zeros((6,1)), jnp.array([7.0, 4.0]), 0.0 )}")
+# print(f"grads: {get_future_reward_grad( jnp.zeros((6,1)), jnp.array([7.0, 4.0]), 0.0 )}")
 
 
-print(f"grads: {get_future_reward_grad( jnp.zeros((6,1)), jnp.array([7.0, 4.0]), 0.0 )}")
+print(f"grads: {get_future_reward_grad( jnp.array([0.38514861, 0.68848354, -0.6646899, 0.07905411, -0.31466046, 0.02618345]).reshape(-1,1), jnp.array([8.690544458472637, 5.899999999999993]), 45.46159775 )}")
+# QUAD_KX is:  8.690544458472637 and QUAD_KV is: 5.899999999999993
+# observed: 0.91843085 -6.39758929
+# expected: [-39.0636906  -71.08954322]
+
+
 exit()
 params_init = jnp.array([7.0, 4.0])
 key, subkey = jax.random.split(key)
@@ -278,7 +290,7 @@ def train_policy_jaxscipy(init_state, params_policy):
 @jit
 def train_policy_custom(init_state, params_policy, init_time):
 
-    @jit
+    # @jit
     def body(i, inputs):
         params_policy = inputs
         params_policy_grad = get_future_reward_grad( init_state, params_policy, init_time )
@@ -301,6 +313,7 @@ def predict_states(init_state, policy_params, key, run_optimizer=False):
     for h in range(simT):
         key, subkey = jax.random.split(key)
         next_state, state_ref, _, _, _ = predict_state( states[:,[h]], policy_params, subkey, h )
+        # print(f"state_ref: {state_ref.T}")
         if h==0:
             states_ref = state_ref
         else:
@@ -320,6 +333,7 @@ def predict_states(init_state, policy_params, key, run_optimizer=False):
 
 # Unoptimized Parameters
 states, states_ref = predict_states(state_vector, jnp.copy(params_init), subkey, run_optimizer=False)
+# exit()
 key, subkey = jax.random.split(key)
 states2, states_ref2 = predict_states(state_vector, jnp.copy(params_init), subkey, run_optimizer=False)
 fig, ax = plt.subplots()

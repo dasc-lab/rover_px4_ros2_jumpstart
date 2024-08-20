@@ -36,7 +36,7 @@ def reward_func(states, weights, pos_ref, vel_ref):
     ex_ev_mean = get_mean(jnp.append(ex, ev, axis=0), weights )
 
     pos_factor = 1.0
-    vel_factor = 0.0 #0.1
+    vel_factor = 0.1 #0.0 #0.1
     reward = pos_factor * jnp.sum(ex_ev_mean[0:3] ** 2) + vel_factor * jnp.sum(ex_ev_mean[3:6] ** 2)
 #     print("reward: ", reward.item())
     return reward

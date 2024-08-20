@@ -23,6 +23,7 @@ def policy( t, states, policy_params):
     kv = policy_params[1]
 
     pos_ref, vel_ref, acc_ref = state_ref(t)
+    # jax.debug.print("state: {x}", x=pos_ref)
 
     ex = states[0:3] - pos_ref
     # ex = lax.cond( jnp.linalg.norm(ex)>2, lambda z: 2.0 * z / jnp.linalg.norm(z), lambda z: z, ex )
@@ -73,7 +74,7 @@ def circle_pos_vel_acc(deltaT, radius, angular_vel, origin_x, origin_y):
     '''
     Calculate reference pos, vel, and acc for the drone flying in a circular trajectory in NED frame.
     '''
-
+    # jax.debug.print("circle cx: {x}, cy: {y}", x=origin_x, y=origin_y)
     ######################################################
     ################## Reference Pos #####################
     ######################################################

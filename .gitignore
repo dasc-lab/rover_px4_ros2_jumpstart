@@ -4,3 +4,5 @@ colcon_ws/log/
 colcon_ws/src/online_op/online_op/__pycache__/*
 colcon_ws/src/online_op/online_op/__pycache__/
 colcon_ws/src/trajectory_driver/trajectory_driver/__pycache__/*
+colcon_ws/src/trajectory_driver/trajectory_driver/__pycache__/*
+colcon_ws/src/online_op/online_op/test_files/__pycache__/*
