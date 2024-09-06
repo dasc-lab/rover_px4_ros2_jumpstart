@@ -92,9 +92,10 @@ class message(Node):
         quat= msg.q
         w, x, y, z = quat
         r =  R.from_quat([w,x,y,z], scalar_first = True)
-        roll, pitch, yaw = r.as_euler('xyz',degrees=False)
+        roll, pitch, yaw = r.as_euler('xyz',degrees=True)
         self.angles = np.array([roll, pitch, yaw])
         self.angle_valid = True
+
 def main(args=None):
     rclpy.init(args=args)
 
