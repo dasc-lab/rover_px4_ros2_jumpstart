@@ -2,7 +2,9 @@ version: "3"
 
 services:
   ros:
-    build: .
+    build: 
+      context: ./
+      dockerfile: Dockerfile
     privileged: true
     tty: true
     network_mode: "host"
@@ -16,7 +18,35 @@ services:
       - DISPLAY=$DISPLAY
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
-      - FASTRTPS_DEFAULT_PROFILES_FILE=/home/colcon_ws/rtps_udp_profile.xml
+        #- FASTRTPS_DEFAULT_PROFILES_FILE=/home/colcon_ws/rtps_udp_profile.xml
+      - ROS_DOMAIN_ID=0
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  ros_cuda:
+    build: 
+      context: ./
+      dockerfile: gpu.Dockerfile
+    privileged: true
+    tty: true
+    network_mode: "host"
+    volumes:
+       - ./colcon_ws:/home/colcon_ws
+       - ../wind_disturbance:/home/wind_disturbance
+       - /tmp/.X11-unix:/tmp/.X11-unix
+       - $HOME/.Xauthority:/home/admin/.Xauthority:rw 
+    environment:
+      - NVIDIA_DISABLE_REQUIRE=1
+      - DISPLAY=$DISPLAY
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+        #- FASTRTPS_DEFAULT_PROFILES_FILE=/home/colcon_ws/rtps_udp_profile.xml
       - ROS_DOMAIN_ID=0
     runtime: nvidia
     deploy:

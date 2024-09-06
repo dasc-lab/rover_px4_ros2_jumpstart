@@ -28,9 +28,11 @@ class driveCircle(Node):
         self.clock  = self.get_clock()
         self.start_time = self.get_clock().now().nanoseconds
         #self.dt = 0.05
+        # print(f"*************************************************   INFO: {self.radius}, {self.angular_vel}, {self.center_x}, {self.center_y}, {self.height}")
 
         ################## set up Subscription ##################
-        self.timer = self.create_timer(1./80., self.timer_callback)
+        # self.timer = self.create_timer(1./80., self.timer_callback)
+        self.timer = self.create_timer(1./50., self.timer_callback)
     
     #def get_ground_truth_coord(self):
     
@@ -63,6 +65,7 @@ class driveCircle(Node):
         msg.center_x = self.center_x
         msg.center_y = self.center_y
         msg.start_time = self.start_time
+        msg.height = self.height
         return msg
     
     def create_TrajectorySetpoint_msg(self):
@@ -107,6 +110,9 @@ class driveCircle(Node):
         
         trajectory_info_msg = self.create_trajectory_info_msg()
         self.trajectory_info_publisher_.publish(trajectory_info_msg)
+
+        # self.get_logger().info(f"hello {self.radius}, {self.angular_vel}, {self.center_x}, {self.center_y}, {self.height} {self.start_time}")
+        # self.get_logger().info(f"{msg.position[0]}, {msg.position[1]}, {msg.position[2]}")
         
 def main(args=None):
     rclpy.init(args=args)
