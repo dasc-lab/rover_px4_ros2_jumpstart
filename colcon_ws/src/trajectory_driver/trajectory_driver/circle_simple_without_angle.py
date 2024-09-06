@@ -3,7 +3,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import *
 import numpy as np
-from px4_msgs.msg import TrajectorySetpoint, VehicleLocalPosition
+from px4_msgs.msg import TrajectorySetpoint
 from foresee_msgs.msg import TrajectoryInfo
 from rclpy.clock import Clock
 
@@ -13,18 +13,14 @@ class driveCircle(Node):
         super().__init__('driveCircle')
 
         ###### set up circle parameters ######
-        # self.radius = 0.4
-        # self.height = -0.5
-        # self.center_x = 0.6
-        # self.center_y = 0.0
-        # self.angular_vel = 1.0
-        ###### set up noise parameters ######
-        self.pos_noise = 0.1
-        self.vel_noise = 0.1
-        self.acc_noise = 0.1 
+        self.radius = 0.4
+        self.height = -0.5
+        self.center_x = 0.6
+        self.center_y = 0.0
+        self.angular_vel = 1.0
 
         ###### set up node parameters ######
-        self.publisher_ = self.create_publisher(VehicleLocalPosition, '/px4_1/fmu/out/vehicle_local_position', 10)
+        self.publisher_ = self.create_publisher(TrajectorySetpoint, '/px4_1/fmu/in/trajectory_setpoint', 10)
         self.trajectory_info_publisher_ = self.create_publisher(TrajectoryInfo,'/drone/TrajectoryInfo',10)
         self.coordinate = None
         self.quat = None

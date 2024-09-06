@@ -8,7 +8,7 @@ from foresee_msgs.msg import DynamicsData as CombinedData
 from geometry_msgs.msg import TransformStamped
 from rclpy.clock import Clock
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
-from scipy import Rotation as R
+
 class message(Node):
     def __init__(self):
         super().__init__('message')
@@ -32,9 +32,8 @@ class message(Node):
         self.vel_ref = None
         self.acc_ref = None
         self.acc_com = None
-        self.angles = None
+        self.quat = None
         self.ref_valid = False
-        self.angle_valid = False
         ############ set up publisher ############
         self.publisher_ = self.create_publisher(CombinedData, '/drone/combined_data', 10)
         
@@ -54,11 +53,7 @@ class message(Node):
 		    '/px4_1/fmu/in/trajectory_setpoint',
 		    self.reference_callback,
 		    10)
-        self.angle = self.create_subscription(
-		    VehicleAttitude,
-		    '/px4_1/fmu/out/vehicle_attitude',
-		    self.angle_callback,
-		    10)
+        
         
     def create_CombinedData_msg(self):
         msg = CombinedData()
@@ -68,7 +63,7 @@ class message(Node):
         msg.pos_ref = self.pos_ref
         msg.vel_ref = self.vel_ref
         msg.acc_ref = self.acc_ref
-        msg.angle = self.angle
+        
         return msg
         ################## set up call backs ##################
         
@@ -76,7 +71,7 @@ class message(Node):
         self.ned_pos = [msg.x,msg.y,msg.z]
         self.ned_vel = [msg.vx,msg.vy,msg.vz]
         self.ned_acc = [msg.ax, msg.ay, msg.az]
-        if not self.ref_valid or not self.angle_valid:
+        if not self.ref_valid:
             return
         message = self.create_CombinedData_msg()
         self.publisher_.publish(message)
@@ -88,13 +83,8 @@ class message(Node):
         self.ref_valid = True
     #def get_ground_truth_coord(self):
     
-    def angle_callback(self, msg):
-        quat= msg.q
-        w, x, y, z = quat
-        r =  R.from_quat([w,x,y,z], scalar_first = True)
-        roll, pitch, yaw = r.as_euler('xyz',degrees=False)
-        self.angles = np.array([roll, pitch, yaw])
-        self.angle_valid = True
+    
+    
 def main(args=None):
     rclpy.init(args=args)
 

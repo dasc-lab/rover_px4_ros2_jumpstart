@@ -15,3 +15,5 @@ float32[3] acc # in meters/second^2
 float32[3] pos_ref # in meters
 float32[3] vel_ref # in meters/second
 float32[3] acc_ref # in meters/second^2
+
+float32[3] angles #in radians
