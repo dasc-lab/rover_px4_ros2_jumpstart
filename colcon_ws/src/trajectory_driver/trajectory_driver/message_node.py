@@ -33,6 +33,7 @@ class message(Node):
         self.acc_ref = None
         self.acc_com = None
         self.angles = None
+        self.quaternion = None
         self.kx = None
         self.kv = None
         self.ref_valid = False
@@ -79,7 +80,8 @@ class message(Node):
         msg.pos_ref = self.pos_ref
         msg.vel_ref = self.vel_ref
         msg.acc_ref = self.acc_ref
-        msg.angle = self.angle
+        msg.angles = self.angles
+        msg.quaternion = self.quaternion
         msg.kx = self.kx
         msg.kv = self.kv
         return msg
@@ -134,6 +136,7 @@ class message(Node):
         r =  R.from_quat([w,x,y,z], scalar_first = True)
         roll, pitch, yaw = r.as_euler('xyz',degrees=True)
         self.angles = np.array([roll, pitch, yaw])
+        self.quaternion = np.array([w,x,y,z])
         self.angle_valid = True
     
     def gains_callback(self, msg):

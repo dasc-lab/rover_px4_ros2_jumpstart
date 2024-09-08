@@ -61,6 +61,7 @@ class figureeight(Node):
         msg.angular_vel = self.angular_vel
         msg.center_x = self.center_x
         msg.center_y = self.center_y
+        msg.height = self.height
         return msg
 
 

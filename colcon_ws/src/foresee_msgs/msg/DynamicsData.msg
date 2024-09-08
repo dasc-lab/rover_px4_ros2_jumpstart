@@ -17,5 +17,6 @@ float32[3] vel_ref # in meters/second
 float32[3] acc_ref # in meters/second^2
 
 float32[3] angles #in radians
+float32[4] quaternion
 float32 kx
 float32 kv
