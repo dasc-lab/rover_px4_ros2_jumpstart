@@ -8,7 +8,7 @@ from foresee_msgs.msg import DynamicsData as CombinedData
 from geometry_msgs.msg import TransformStamped
 from rclpy.clock import Clock
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
-from scipy import Rotation as R
+from scipy.spatial.transform import Rotation as R
 class message(Node):
     def __init__(self):
         super().__init__('message')
@@ -34,8 +34,8 @@ class message(Node):
         self.acc_com = None
         self.angles = None
         self.quaternion = None
-        self.kx = None
-        self.kv = None
+        self.kx = 7.0#None
+        self.kv = 4.0#None
         self.ref_valid = False
         self.angle_valid = False
         self.gains_valid = False
@@ -63,12 +63,15 @@ class message(Node):
 		    VehicleAttitude,
 		    '/px4_1/fmu/out/vehicle_attitude',
 		    self.angle_callback,
-		    10)
-        self.gains = self.create_subscription(
-		    ParameterRes,
-		    '/px4_1/fmu/out/parameter_res',
-		    self.gains_callback,
-		    10)
+		    # 10)
+            qos_profile=qos_profile)
+        self.gains_valid = True
+        # self.gains = self.create_subscription(
+		#     ParameterRes,
+		#     '/px4_1/fmu/out/parameter_res',
+		#     self.gains_callback,
+		#     # 10)
+        #     qos_profile=qos_profile)
         
     def timer_callback(self):
         self.request_gains()
@@ -131,22 +134,23 @@ class message(Node):
     
     
     def angle_callback(self, msg):
-        quat= msg.q
+        
+        quat = msg.q
         w, x, y, z = quat
         r =  R.from_quat([w,x,y,z], scalar_first = True)
         roll, pitch, yaw = r.as_euler('xyz',degrees=True)
-        self.angles = np.array([roll, pitch, yaw])
-        self.quaternion = np.array([w,x,y,z])
+        self.angles = [roll, pitch, yaw]
+        self.quaternion = [float(w),float(x),float(y),float(z)]
         self.angle_valid = True
     
-    def gains_callback(self, msg):
-        param_name = msg.param_name
-        if param_name == 'QUAD_KX':
-            self.kx = msg.value
-        if param_name == 'QUAD_KV':
-            self.kv = msg.value
-        if self.kx is not None and self.kv is not None:
-            self.gains_valid = True
+    # def gains_callback(self, msg):
+    #     param_name = msg.param_name
+    #     if param_name == 'QUAD_KX':
+    #         self.kx = msg.value
+    #     if param_name == 'QUAD_KV':
+    #         self.kv = msg.value
+    #     if self.kx is not None and self.kv is not None:
+    #         self.gains_valid = True
 def main(args=None):
     rclpy.init(args=args)
 
