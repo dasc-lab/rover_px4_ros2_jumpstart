@@ -7,6 +7,7 @@ import pickle
 from gpjax import Dataset
 from jax import jit, random
 key = random.PRNGKey(2)
+from jax.scipy.spatial.transform import Rotation
 
 @jit
 def get_next_states_ideal(states, control_inputs, dt):
@@ -63,6 +64,18 @@ def get_next_states_noisy(states, control_inputs, dt):
     cov_next = jnp.append( jnp.zeros( (3,13) ), drag_cov, axis=0)
 
     return states_next, cov_next
+
+@jit
+def compute_quaternions(b1ds, b2ds, b3ds):
+
+    quaternions = jnp.zeros((4,13))
+    def body(i, inputs):
+        quaternions = inputs
+        R = jnp.concatenate( (b1ds[:,[i]], b2ds[:,[i]], b3ds[:,[i]]), axis=1 )
+        quaternions.at[:,i].set( Rotation.as_quat( Rotation.from_matrix(R) ) )
+        return quaternions
+    quaternions = jax.lax.fori_loop( 0, 13, body, quaternions )
+    return quaternions
 
 @jit
 def get_next_states_with_gp_sigma_inv( states, control_inputs, dt, gps, sigma_inv, train_x, train_y ):
@@ -174,6 +187,16 @@ def get_next_states_with_sparse_gp_sigma_inv( states, control_inputs, dt, gps, L
     '''
     test_x = states.T #jnp.append( states.T, control_inputs.T, axis=0)
     g = 9.8066
+
+    b3d = control_inputs/jnp.linalg.norm(control_inputs, axis=0)
+    b1_ref = jnp.repeat( jnp.array([1,0,0]).reshape(-1,1), 13, axis=1  )
+    b2d = jnp.cross(b3d, b1_ref, axis=0)
+    b1d = jnp.cross(b2d, b3d, axis=0)
+    quaternion = compute_quaternions( b1d, b2d, b3d )
+    # R = jnp.concatenate( (b1d, b2d, b3d), axis=1 )
+    # quaternion = Rotation.to_quat( R )
+
+    test_x = jnp.concatenate( (states, control_inputs, quaternion), axis=0).T
 
     #################################################
     ####### Changed: dataset(.reshape) #######

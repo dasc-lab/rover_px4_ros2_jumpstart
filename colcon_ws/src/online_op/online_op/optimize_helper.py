@@ -4,7 +4,7 @@ import numpy as np
 from jax import grad, jit
 from .jax_utils import *
 from .gp_utils_sparse import get_next_states_with_gp_sigma_inv
-from .policy import policy, circle_pos_vel_acc, figure8_pos_vel_acc
+from .policy_obstacle import policy, circle_pos_vel_acc, figure8_pos_vel_acc
 from jax.experimental import host_callback as hcb
 
 horizon = 50

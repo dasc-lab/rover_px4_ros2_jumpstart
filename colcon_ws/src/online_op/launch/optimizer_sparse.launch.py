@@ -7,8 +7,8 @@ def generate_launch_description():
     optimizer_sparse = Node(
         
         package='online_op',
-        executable='optimizer_sparse_gp',
-        name='optimizer_sparse_gp',
+        executable='optimizer_sparse_gp_obstacle',
+        name='optimizer_sparse_gp_obstacle',
         # namespace='',
         output='screen'
         # parameters=[{'param_name': 'param_value'}],

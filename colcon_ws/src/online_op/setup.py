@@ -31,7 +31,8 @@ setup(
     entry_points={
         'console_scripts': [
             'optimizer=online_op.optimize:main',
-            'optimizer_sparse_gp=online_op.optimize_sparse_gp:main'
+            'optimizer_sparse_gp=online_op.optimize_sparse_gp:main',
+            'optimizer_sparse_gp_obstacle=online_op.optimize_sparse_gp_obstacle:main'
         ],
     },
 )

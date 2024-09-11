@@ -4,6 +4,21 @@ import matplotlib.transforms as transforms
 import jax.numpy as jnp
 from jax import jit, lax
 # import numpy as np
+import jax 
+@jit
+def constraint_violation(states, weights, circle_center, circle_radius):
+    dists = jnp.linalg.norm(states[0:2]-circle_center[0:2], axis=0).reshape((1,13)) - circle_radius
+    mean_dist, cov_dist = get_mean_cov( dists, weights )
+    # jax.debug.print("{x}", x=risk_dist)
+    risk_dist = mean_dist - 2.96 * jnp.sqrt(cov_dist)
+    risk_dist = jnp.clip( risk_dist, None, 0.0 )
+    return risk_dist[0,0]
+
+@jit
+def constraint_violation_predict(states, weights, circle_center, circle_radius):
+
+    dist = jnp.linalg.norm(states[0:2,0]-circle_center[0:2,0], axis=0)-circle_radius
+    return dist
 
 @jit
 def get_mean( sigma_points, weights ):
