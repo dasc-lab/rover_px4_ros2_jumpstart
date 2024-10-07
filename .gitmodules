@@ -13,3 +13,6 @@
 [submodule "colcon_ws/src/dasc_ros"]
 	path = colcon_ws/src/dasc_ros
 	url = git@github.com:dev10110/dasc_ros.git
+[submodule "colcon_ws/src/Barrier-Rate-MPPI"]
+	path = colcon_ws/src/barrier_rate_mppi/
+	url = git@github.com:hardikparwana/Barrier-Rate-MPPI.git
