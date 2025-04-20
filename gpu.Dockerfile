@@ -71,6 +71,6 @@ RUN pip3 install pymavlink
 RUN pip3 install empy==3.3.4
 RUN echo 'alias px4="ros2 launch all_launch px4.launch.py"' >> ~/.bashrc
 
-RUN apt-get install ros-humble-desktop
+RUN apt-get install -y ros-humble-desktop
 RUN source /opt/ros/humble/setup.bash
 
